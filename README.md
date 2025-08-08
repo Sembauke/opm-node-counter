@@ -1,4 +1,5 @@
 # 🗺️ OPM Node Counter
+<img width="1681" height="650" alt="{12432492-6221-4D7F-8379-6BFF4B745C66}" src="https://github.com/user-attachments/assets/44a04f35-c3bb-4bc1-b3de-e4fd5108647a" />
 
 A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset activity. This Next.js application provides live updates of node counts, changeset totals, mapper activity, and more with a beautiful, modern UI.
 
@@ -16,10 +17,6 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
 - **Changeset Monitoring**: View recent changesets with detailed information
 - **Responsive Design**: Works perfectly on desktop and mobile devices
 - **Dark Theme**: Eye-friendly dark mode with cyan accent colors
-
-## 🚀 Live Demo
-
-Visit the live application: [OPM Node Counter](https://your-deployment-url.com)
 
 ## 📊 Dashboard Features
 
