@@ -67,14 +67,7 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
    bun install
    ```
 
-3. **Set up environment variables**
-   Create a `.env.local` file in the root directory:
-   ```env
-   REDIS_URL=redis://localhost:6379
-   # Add other environment variables as needed
-   ```
-
-4. **Start Redis server**
+3. **Start Redis server**
    ```bash
    # Install Redis if you haven't already
    # On Windows: Use WSL or Docker
@@ -84,7 +77,7 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
    redis-server
    ```
 
-5. **Run the development server**
+4. **Run the development server**
    ```bash
    npm run dev
    # or
@@ -95,7 +88,7 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
    bun dev
    ```
 
-6. **Open your browser**
+5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 
