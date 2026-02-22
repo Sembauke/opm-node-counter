@@ -1,20 +1,26 @@
 'use server'
 
-import { client } from "../lib/db"
+import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
 
-function getCurrentHourKey() {
-  const now = new Date();
-  // Format: unique_mappers:YYYY-MM-DD-HH (UTC)
-  return `unique_mappers:${now.getUTCFullYear()}-${now.getUTCMonth()+1}-${now.getUTCDate()}-${now.getUTCHours()}`;
-}
+const insertUniqueMapper = db.prepare(`
+  INSERT OR IGNORE INTO unique_mappers_hour (bucket_hour, user)
+  VALUES (?, ?)
+`);
+
+const selectUniqueMapperCount = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM unique_mappers_hour
+  WHERE bucket_hour = ?
+`);
 
 export async function sendOrGetUniqueMappersHour(user: string | null = null) {
-  const hourKey = getCurrentHourKey();
-  if (user) {
-    await client.sAdd(hourKey, user);
+  const bucketHour = getCurrentHourBucket();
+  pruneHourlyStats(bucketHour);
 
-    await client.expire(hourKey, 60 * 60 * 25);
+  if (user) {
+    insertUniqueMapper.run(bucketHour, user);
   }
-  const count = await client.sCard(hourKey);
-  return count;
-} 
+
+  const row = selectUniqueMapperCount.get(bucketHour) as { count: number } | undefined;
+  return row?.count ?? 0;
+}

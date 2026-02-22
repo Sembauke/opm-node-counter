@@ -1,31 +1,30 @@
 'use server'
 
-import { client } from "../lib/db"
+import { db } from "../lib/db";
 
-export async function sendOrGetChangesetTotal(nodes: number | null = null){
-    const totalChangesetsFromRedis = await client.get('changesets');
-    
-    if(totalChangesetsFromRedis && !nodes){
-        const totalParsed = parseInt(totalChangesetsFromRedis, 0)
+const selectChangesetTotal = db.prepare(
+  "SELECT value FROM global_stats WHERE key = 'changesets'"
+);
 
-        if(totalParsed > 0){
-            return totalParsed;
-        }
-    }  
+const upsertChangesetTotal = db.prepare(`
+  INSERT INTO global_stats (key, value)
+  VALUES ('changesets', ?)
+  ON CONFLICT(key) DO UPDATE SET value =
+    CASE
+      WHEN excluded.value > global_stats.value THEN excluded.value
+      ELSE global_stats.value
+    END
+`);
 
-    if(!totalChangesetsFromRedis && nodes){
-        client.set('changesets', nodes.toString())
-        return nodes;
-    }
+export async function sendOrGetChangesetTotal(total: number | null = null) {
+  if (total !== null) {
+    upsertChangesetTotal.run(total);
+  }
 
-    if(totalChangesetsFromRedis && nodes){
-        const totalParsed = parseInt(totalChangesetsFromRedis, 0)
+  const row = selectChangesetTotal.get() as { value: number } | undefined;
+  if (row) {
+    return row.value;
+  }
 
-        const newTotal = totalParsed < nodes ? nodes : totalChangesetsFromRedis;
-        client.set('changesets', newTotal);
-
-        return parseInt(newTotal.toString(), 0);
-    }
-
-    return nodes ?? 0;
+  return total ?? 0;
 }

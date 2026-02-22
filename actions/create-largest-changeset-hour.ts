@@ -1,21 +1,31 @@
 'use server'
 
-import { client } from "../lib/db"
+import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
 
-function getCurrentHourKey() {
-  const now = new Date();
-  // Format: largest_changeset:YYYY-MM-DD-HH (UTC)
-  return `largest_changeset:${now.getUTCFullYear()}-${now.getUTCMonth()+1}-${now.getUTCDate()}-${now.getUTCHours()}`;
-}
+const upsertLargestChangeset = db.prepare(`
+  INSERT INTO largest_changeset_hour (bucket_hour, largest_changes)
+  VALUES (?, ?)
+  ON CONFLICT(bucket_hour) DO UPDATE SET
+    largest_changes = CASE
+      WHEN excluded.largest_changes > largest_changeset_hour.largest_changes THEN excluded.largest_changes
+      ELSE largest_changeset_hour.largest_changes
+    END
+`);
+
+const selectLargestChangeset = db.prepare(`
+  SELECT largest_changes AS value
+  FROM largest_changeset_hour
+  WHERE bucket_hour = ?
+`);
 
 export async function sendOrGetLargestChangesetHour(user: string | null = null, changesCount: number | null = null) {
-  const hourKey = getCurrentHourKey();
+  const bucketHour = getCurrentHourBucket();
+  pruneHourlyStats(bucketHour);
+
   if (user && changesCount !== null) {
-    const current = parseInt(await client.get(hourKey) || '0', 10);
-    if (changesCount > current) {
-      await client.set(hourKey, changesCount.toString());
-      await client.expire(hourKey, 60 * 60 * 25);
-    }
+    upsertLargestChangeset.run(bucketHour, changesCount);
   }
-  return parseInt(await client.get(hourKey) || '0', 10);
-} 
+
+  const row = selectLargestChangeset.get(bucketHour) as { value: number } | undefined;
+  return Number(row?.value ?? 0);
+}

@@ -35,7 +35,7 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
 - **Language**: TypeScript
 - **UI Library**: Chakra UI 3.8.0
 - **Real-time**: Socket.IO
-- **Database**: Redis (for caching and real-time data)
+- **Database**: SQLite (SQL storage for real-time stats)
 - **Styling**: CSS Modules with custom animations
 - **Icons**: React Icons
 - **Animations**: React CountUp for number animations
@@ -46,7 +46,7 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
 
 - Node.js 18+ 
 - npm, yarn, pnpm, or bun
-- Redis server (for real-time features)
+- No external database service required in development
 
 ### Setup
 
@@ -67,17 +67,7 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
    bun install
    ```
 
-3. **Start Redis server**
-   ```bash
-   # Install Redis if you haven't already
-   # On Windows: Use WSL or Docker
-   # On macOS: brew install redis
-   # On Linux: sudo apt-get install redis-server
-   
-   redis-server
-   ```
-
-4. **Run the development server**
+3. **Run the development server**
    ```bash
    npm run dev
    # or
@@ -88,7 +78,12 @@ A real-time dashboard for tracking OpenStreetMap (OSM) statistics and changeset 
    bun dev
    ```
 
-5. **Open your browser**
+   This starts the frontend and initializes the SQLite database automatically.
+
+4. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+## 🗃️ Database Notes
 
+- Default SQLite file: `data/stats.db`
+- Override path with environment variable: `SQLITE_PATH=./custom/path/stats.db`

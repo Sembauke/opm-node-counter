@@ -1,32 +1,44 @@
 'use server'
 
-import { client } from "../lib/db"
+import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
 
-function getCurrentHourKey() {
-  const now = new Date();
-  // Format: top_mappers:YYYY-MM-DD-HH (UTC)
-  return `top_mappers:${now.getUTCFullYear()}-${now.getUTCMonth()+1}-${now.getUTCDate()}-${now.getUTCHours()}`;
-}
+const insertChangesetForUser = db.prepare(`
+  INSERT OR IGNORE INTO top_mapper_changesets_hour (bucket_hour, user, changeset_id)
+  VALUES (?, ?, ?)
+`);
 
-export async function sendOrGetTopMappersHour(user: string | null = null, changes: number = 1, changesetId: number | null = null) {
-  const hourKey = getCurrentHourKey();
-  if (user && changesetId !== null) {
-    const userSetKey = `${hourKey}:user:${user}:changesets`;
-    const alreadyCounted = await client.sIsMember(userSetKey, String(changesetId));
-    if (!alreadyCounted) {
-      await client.zIncrBy(hourKey, changes, user);
-      await client.sAdd(userSetKey, String(changesetId));
-      await client.expire(userSetKey, 60 * 60 * 25);
-      await client.expire(hourKey, 60 * 60 * 25);
+const upsertTopMapper = db.prepare(`
+  INSERT INTO top_mappers_hour (bucket_hour, user, total_changes)
+  VALUES (?, ?, ?)
+  ON CONFLICT(bucket_hour, user) DO UPDATE SET
+    total_changes = top_mappers_hour.total_changes + excluded.total_changes
+`);
+
+const selectTopMappers = db.prepare(`
+  SELECT user, total_changes AS count
+  FROM top_mappers_hour
+  WHERE bucket_hour = ?
+  ORDER BY total_changes DESC, user ASC
+  LIMIT 18
+`);
+
+const trackTopMapperForChangeset = db.transaction(
+  (bucketHour: number, user: string, changes: number, changesetId: number) => {
+    const insertResult = insertChangesetForUser.run(bucketHour, user, changesetId);
+    if (insertResult.changes > 0) {
+      upsertTopMapper.run(bucketHour, user, changes);
     }
   }
+);
 
-  const raw = await client.sendCommand(['ZREVRANGE', hourKey, '0', '17', 'WITHSCORES']);
-  const top = Array.isArray(raw) ? raw : [];
-  const result = [];
-  for (let i = 0; i < top.length; i += 2) {
-    result.push({ user: String(top[i]), count: parseInt(top[i+1] as string, 10) });
+export async function sendOrGetTopMappersHour(user: string | null = null, changes: number = 1, changesetId: number | null = null) {
+  const bucketHour = getCurrentHourBucket();
+  pruneHourlyStats(bucketHour);
+
+  if (user && changesetId !== null) {
+    trackTopMapperForChangeset(bucketHour, user, changes, changesetId);
   }
 
-  return result;
-} 
+  const rows = selectTopMappers.all(bucketHour) as Array<{ user: string; count: number }>;
+  return rows.map((row) => ({ user: row.user, count: Number(row.count) }));
+}

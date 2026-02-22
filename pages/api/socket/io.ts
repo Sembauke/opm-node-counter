@@ -8,7 +8,6 @@ import { sendOrGetLargestChangesetHour } from "@/actions/create-largest-changese
 import { sendOrGetNewNodesHour } from "@/actions/create-new-nodes-hour";
 import { convertXML } from "simple-xml-to-json";
 import type { Changeset } from "@/types/changeset";
-import { client } from "@/lib/db";
 
 function getTopMappers(changesets: Changeset[]): string[] {
   if (!changesets.length) return [];
@@ -132,7 +131,7 @@ export default async function handler(req: any, res: any) {
         }
 
 
-        //  Send Redis new Data
+        // Persist fresh stats in SQL storage
 
         if(previousTotalNodes != 0 && latestTotalNodes != 0){
           await sendOrGetNewNodesHour(newHourlyTotalNodes);

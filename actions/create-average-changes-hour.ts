@@ -1,25 +1,33 @@
 'use server'
 
-import { client } from "../lib/db"
+import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
 
-function getCurrentHourKey() {
-  const now = new Date();
-  // Format: avg_changes:YYYY-MM-DD-HH (UTC)
-  return `avg_changes:${now.getUTCFullYear()}-${now.getUTCMonth()+1}-${now.getUTCDate()}-${now.getUTCHours()}`;
-}
+const upsertAverageChanges = db.prepare(`
+  INSERT INTO average_changes_hour (bucket_hour, total_changes, count)
+  VALUES (?, ?, 1)
+  ON CONFLICT(bucket_hour) DO UPDATE SET
+    total_changes = average_changes_hour.total_changes + excluded.total_changes,
+    count = average_changes_hour.count + 1
+`);
+
+const selectAverageChanges = db.prepare(`
+  SELECT total_changes AS total, count
+  FROM average_changes_hour
+  WHERE bucket_hour = ?
+`);
 
 export async function sendOrGetAverageChangesHour(user: string | null = null, changesCount: number | null = null) {
-  const hourKey = getCurrentHourKey();
-  const totalKey = hourKey + ':total';
-  const countKey = hourKey + ':count';
+  const bucketHour = getCurrentHourBucket();
+  pruneHourlyStats(bucketHour);
+
   if (user && changesCount !== null) {
-    await client.incrBy(totalKey, changesCount);
-    await client.incr(countKey);
-    await client.expire(totalKey, 60 * 60 * 25);
-    await client.expire(countKey, 60 * 60 * 25);
+    upsertAverageChanges.run(bucketHour, changesCount);
   }
-  const total = parseInt(await client.get(totalKey) || '0', 10);
-  const count = parseInt(await client.get(countKey) || '0', 10);
-  if (count === 0) return 0;
-  return Math.round(total / count);
-} 
+
+  const row = selectAverageChanges.get(bucketHour) as { total: number; count: number } | undefined;
+  if (!row || row.count === 0) {
+    return 0;
+  }
+
+  return Math.round(Number(row.total) / Number(row.count));
+}
