@@ -7,8 +7,9 @@ import { sendOrGetAverageChangesHour } from "@/actions/create-average-changes-ho
 import { sendOrGetLargestChangesetHour } from "@/actions/create-largest-changeset-hour";
 import { sendOrGetNewNodesHour } from "@/actions/create-new-nodes-hour";
 import { sendOrGetNodesPerMinute } from "@/actions/create-nodes-per-minute";
-import { sendOrGetTotalChangesetsTrend } from "@/actions/create-total-changesets-trend";
+import { sendOrGetNodesPerMinuteTrend } from "@/actions/create-nodes-per-minute-trend";
 import { enrichChangesetsWithCountry } from "@/lib/changeset-country";
+import { TOTAL_SOVEREIGN_COUNTRIES } from "@/lib/sovereign-countries";
 import type { Changeset } from "@/types/changeset";
 import type { ChangesetsTrendPoint } from "@/components/TotalChangesetsLineGraph";
 import HomeClient from "./HomeClient";
@@ -34,12 +35,13 @@ export default async function Home() {
   const largestChangesetHour = await sendOrGetLargestChangesetHour();
   const newNodesHour = await sendOrGetNewNodesHour();
   const nodesPerMinute = await sendOrGetNodesPerMinute();
-  const changesetsTrend: ChangesetsTrendPoint[] = await sendOrGetTotalChangesetsTrend(totalChangesets);
+  const nodesPerMinuteTrend: ChangesetsTrendPoint[] = await sendOrGetNodesPerMinuteTrend();
 
   return <HomeClient
     changesetBatch={changesetBatch}
     totalNodes={totalNodes}
     totalChangesets={totalChangesets}
+    totalSovereignCountries={TOTAL_SOVEREIGN_COUNTRIES}
     uniqueMappersHour={uniqueMappersHour}
     topMappersHour={topMappersHour}
     topCountriesHour={topCountriesHour}
@@ -47,6 +49,6 @@ export default async function Home() {
     largestChangesetHour={largestChangesetHour}
     nodesPerMinute={nodesPerMinute}
     newNodesHour={newNodesHour}
-    changesetsTrend={changesetsTrend}
+    nodesPerMinuteTrend={nodesPerMinuteTrend}
   />;
 }

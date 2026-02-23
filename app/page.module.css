@@ -187,54 +187,6 @@
   font-size: 0.95rem;
 }
 
-.resetButton {
-  appearance: none;
-  border: 1px solid transparent;
-  background: linear-gradient(135deg, var(--accent-600), var(--accent-700));
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 0.86rem;
-  border-radius: 999px;
-  padding: 0.54rem 1.04rem;
-  letter-spacing: 0.015em;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(12, 52, 110, 0.24);
-  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
-}
-
-.resetButton:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 12px 26px rgba(12, 52, 110, 0.3);
-}
-
-.resetButton:disabled {
-  opacity: 0.64;
-  cursor: wait;
-  transform: none;
-}
-
-.statusChip {
-  margin: 0;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.42rem 0.72rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-}
-
-.statusSuccess {
-  background: rgba(27, 132, 78, 0.12);
-  border-color: rgba(27, 132, 78, 0.28);
-  color: #0f6d3c;
-}
-
-.statusError {
-  background: rgba(181, 49, 49, 0.1);
-  border-color: rgba(181, 49, 49, 0.25);
-  color: #9b2f2f;
-}
-
 .sectionWrap {
   animation: enterUp 0.55s ease both;
 }
@@ -256,7 +208,7 @@
 
 .secondaryStatsGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -633,11 +585,55 @@
 }
 
 .lineChartWrap {
+  --line-primary: var(--accent-700);
+  --line-primary-area: color-mix(in srgb, var(--accent-600) 24%, transparent);
+  --line-secondary: #f6b73c;
+  --line-guide: color-mix(in srgb, var(--accent-700) 52%, transparent);
   width: 100%;
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--surface-strong);
   padding: 0.3rem;
+  touch-action: none;
+}
+
+.lineChartCanvas {
+  width: 100%;
+  height: 17.5rem;
+}
+
+.lineRechartsGrid {
+  opacity: 0.45;
+}
+
+.lineTooltipCard {
+  min-width: 10.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 93%, #020714 7%);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.26);
+  padding: 0.5rem 0.6rem;
+}
+
+.lineTooltipTime {
+  margin: 0;
+  color: var(--text-muted-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.lineTooltipValuePrimary {
+  margin: 0.18rem 0 0;
+  color: var(--text-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.lineTooltipValueSecondary {
+  margin: 0.12rem 0 0;
+  color: color-mix(in srgb, var(--line-secondary) 84%, var(--text-strong) 16%);
+  font-size: 0.84rem;
+  font-weight: 700;
 }
 
 .lineChartSvg {
@@ -651,22 +647,114 @@
   stroke-width: 1.4;
 }
 
+.lineLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.lineLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted-soft);
+  font-size: 0.79rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.lineLegendSwatchPrimary,
+.lineLegendSwatchSecondary {
+  width: 0.92rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.lineLegendSwatchPrimary {
+  background: var(--line-primary);
+}
+
+.lineLegendSwatchSecondary {
+  background: var(--line-secondary);
+}
+
 .lineArea {
-  fill: color-mix(in srgb, var(--accent-600) 24%, transparent);
+  fill: var(--line-primary-area);
 }
 
 .lineStroke {
   fill: none;
-  stroke: var(--accent-700);
+  stroke: var(--line-primary);
   stroke-width: 3;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
+.lineStrokeSecondary {
+  fill: none;
+  stroke: var(--line-secondary);
+  stroke-width: 2.7;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 6 4;
+}
+
 .lineDotCurrent {
-  fill: var(--accent-700);
+  fill: var(--line-primary);
   stroke: var(--surface-strong);
   stroke-width: 2;
+}
+
+.lineDotSecondaryCurrent {
+  fill: var(--line-secondary);
+  stroke: var(--surface-strong);
+  stroke-width: 2;
+}
+
+.lineHoverGuide {
+  stroke: var(--line-guide);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 5;
+}
+
+.lineHoverDot {
+  fill: var(--line-primary);
+  stroke: var(--surface-strong);
+  stroke-width: 2;
+}
+
+.lineHoverDotSecondary {
+  fill: var(--line-secondary);
+  stroke: var(--surface-strong);
+  stroke-width: 2;
+}
+
+.lineHoverTooltipBox {
+  fill: color-mix(in srgb, var(--surface) 92%, #020714 8%);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.lineHoverTooltipTime {
+  fill: var(--text-muted-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.lineHoverTooltipPrimary {
+  fill: var(--text-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lineHoverTooltipSecondary {
+  fill: color-mix(in srgb, var(--line-secondary) 85%, var(--text-strong) 15%);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .lineChartMeta {
@@ -686,6 +774,13 @@
   color: var(--text-muted);
   font-size: 0.74rem;
   letter-spacing: 0.02em;
+}
+
+.lineChartInspect {
+  margin: 0.34rem 0 0;
+  color: var(--text-muted-soft);
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
 }
 
 .changesetList {
@@ -907,6 +1002,12 @@
 
   100% {
     transform: translateX(125%);
+  }
+}
+
+@media (max-width: 1400px) {
+  .secondaryStatsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

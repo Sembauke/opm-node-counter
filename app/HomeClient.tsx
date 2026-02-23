@@ -20,6 +20,7 @@ interface HomeClientProps {
   changesetBatch: Changeset[];
   totalNodes: number;
   totalChangesets: number;
+  totalSovereignCountries: number;
   uniqueMappersHour: number;
   topMappersHour: { user: string; count: number }[];
   topCountriesHour: { countryCode: string; count: number }[];
@@ -27,7 +28,7 @@ interface HomeClientProps {
   largestChangesetHour: number;
   nodesPerMinute: number;
   newNodesHour?: number;
-  changesetsTrend: ChangesetsTrendPoint[];
+  nodesPerMinuteTrend: ChangesetsTrendPoint[];
 }
 
 interface LiveData {
@@ -41,6 +42,7 @@ interface LiveData {
   largestChangesetHour: number;
   nodesPerMinute: number;
   newNodesHour: number;
+  statsTimestampMs: number;
 }
 
 interface FallingNode {
@@ -71,8 +73,13 @@ const CHANGES_PER_FLAG_PARTICLE = 120;
 const MAX_FLAGS_PER_CHANGESET = 18;
 const MAX_FLAGS_PER_TICK = 84;
 const MAX_CONTRIBUTOR_PARTICLES_PER_TICK = 14;
-const MAX_ACTIVE_PARTICLES = 260;
-const TREND_CLIENT_LIMIT = 5000;
+const MAX_ACTIVE_PARTICLES = 420;
+const TREND_CLIENT_LIMIT = 20000;
+const FLAG_FALL_MIN_MS = 11_200;
+const FLAG_FALL_RANGE_MS = 5_400;
+const CONTRIBUTOR_FALL_MIN_MS = 12_800;
+const CONTRIBUTOR_FALL_RANGE_MS = 5_800;
+const PARTICLE_DELAY_MAX_MS = 700;
 
 function toFlagEmoji(countryCode: string): string {
   return countryCode
@@ -184,6 +191,7 @@ export default function HomeClient({
   changesetBatch: initialChangesetBatch,
   totalNodes: initialTotalNodes,
   totalChangesets: initialTotalChangesets,
+  totalSovereignCountries,
   uniqueMappersHour: initialUniqueMappersHour,
   topMappersHour: initialTopMappersHour,
   topCountriesHour: initialTopCountriesHour,
@@ -191,7 +199,7 @@ export default function HomeClient({
   largestChangesetHour: initialLargestChangesetHour,
   nodesPerMinute: initialNodesPerMinute,
   newNodesHour: initialNewNodesHour = 0,
-  changesetsTrend: initialChangesetsTrend,
+  nodesPerMinuteTrend: initialNodesPerMinuteTrend,
 }: HomeClientProps) {
   const { colorMode, toggleColorMode } = useColorMode();
 
@@ -201,10 +209,6 @@ export default function HomeClient({
   const pageContainerRef = useRef<HTMLElement | null>(null);
   const fallingNodeIdRef = useRef(0);
   const particleTimersRef = useRef<number[]>([]);
-
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
 
   const [liveData, setLiveData] = useState<LiveData>({
     changesetBatch: initialChangesetBatch,
@@ -217,11 +221,12 @@ export default function HomeClient({
     largestChangesetHour: initialLargestChangesetHour,
     nodesPerMinute: initialNodesPerMinute,
     newNodesHour: initialNewNodesHour,
+    statsTimestampMs: Date.now(),
   });
-  const [changesetsTrend, setChangesetsTrend] = useState<ChangesetsTrendPoint[]>(
-    initialChangesetsTrend.length > 0
-      ? initialChangesetsTrend
-      : [{ timestamp: Date.now(), value: initialTotalChangesets }]
+  const [nodesPerMinuteTrend, setNodesPerMinuteTrend] = useState<ChangesetsTrendPoint[]>(
+    initialNodesPerMinuteTrend.length > 0
+      ? initialNodesPerMinuteTrend
+      : [{ timestamp: Date.now(), value: initialNodesPerMinute }]
   );
 
   useEffect(() => {
@@ -296,8 +301,8 @@ export default function HomeClient({
           glyph: flag,
           leftPercent: placement.leftPercent,
           sizeRem: 1.7 + Math.random() * 1.5,
-          durationMs: 5200 + Math.round(Math.random() * 3600),
-          delayMs: Math.round(Math.random() * 1200),
+          durationMs: FLAG_FALL_MIN_MS + Math.round(Math.random() * FLAG_FALL_RANGE_MS),
+          delayMs: Math.round(Math.random() * PARTICLE_DELAY_MAX_MS),
           driftPx:
             placement.lane === "left"
               ? -72 + Math.round(Math.random() * 24)
@@ -338,8 +343,9 @@ export default function HomeClient({
         label: formatContributorLabel(contributor),
         leftPercent: placement.leftPercent,
         sizeRem: 1.35 + Math.random() * 0.65,
-        durationMs: 5600 + Math.round(Math.random() * 3200),
-        delayMs: Math.round(Math.random() * 1200),
+        durationMs:
+          CONTRIBUTOR_FALL_MIN_MS + Math.round(Math.random() * CONTRIBUTOR_FALL_RANGE_MS),
+        delayMs: Math.round(Math.random() * PARTICLE_DELAY_MAX_MS),
         driftPx:
           placement.lane === "left"
             ? -66 + Math.round(Math.random() * 22)
@@ -368,16 +374,26 @@ export default function HomeClient({
   }, [liveData.changesetBatch]);
 
   useEffect(() => {
-    setChangesetsTrend((prev) => {
+    const pointTimestamp =
+      typeof liveData.statsTimestampMs === "number" && Number.isFinite(liveData.statsTimestampMs)
+        ? Math.floor(liveData.statsTimestampMs)
+        : Date.now();
+    const pointValue = Math.max(Math.round(liveData.nodesPerMinute), 0);
+
+    setNodesPerMinuteTrend((prev) => {
       const lastPoint = prev[prev.length - 1];
-      if (lastPoint && lastPoint.value === liveData.totalChangesets) {
+      if (
+        lastPoint &&
+        lastPoint.timestamp === pointTimestamp &&
+        lastPoint.value === pointValue
+      ) {
         return prev;
       }
 
-      const next = [...prev, { timestamp: Date.now(), value: liveData.totalChangesets }];
+      const next = [...prev, { timestamp: pointTimestamp, value: pointValue }];
       return next.slice(-TREND_CLIENT_LIMIT);
     });
-  }, [liveData.totalChangesets]);
+  }, [liveData.nodesPerMinute, liveData.statsTimestampMs]);
 
   useEffect(() => {
     return () => {
@@ -387,27 +403,6 @@ export default function HomeClient({
       particleTimersRef.current = [];
     };
   }, []);
-
-  async function handleReset() {
-    setResetLoading(true);
-    setResetSuccess(false);
-    setResetError(null);
-
-    try {
-      const response = await fetch("/api/reset-stats", { method: "POST" });
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        setResetError(body.error || "Failed to reset stats");
-      } else {
-        setResetSuccess(true);
-      }
-    } catch (error: unknown) {
-      setResetError(error instanceof Error ? error.message : "Failed to reset stats");
-    } finally {
-      setResetLoading(false);
-      setTimeout(() => setResetSuccess(false), 2200);
-    }
-  }
 
   return (
     <div className={styles.appShell}>
@@ -479,21 +474,6 @@ export default function HomeClient({
                 </>
               )}
             </button>
-
-            <button
-              type="button"
-              className={styles.resetButton}
-              onClick={handleReset}
-              disabled={resetLoading}
-            >
-              {resetLoading ? "Resetting..." : "Reset all stats"}
-            </button>
-
-            {resetSuccess && (
-              <p className={`${styles.statusChip} ${styles.statusSuccess}`}>Stats reset successfully</p>
-            )}
-
-            {resetError && <p className={`${styles.statusChip} ${styles.statusError}`}>{resetError}</p>}
           </div>
         </header>
 
@@ -507,8 +487,15 @@ export default function HomeClient({
         </section>
 
         <section className={styles.sectionWrap}>
-          <p className={styles.sectionLabel}>Total changesets</p>
-          <TotalChangesetsLineGraph points={changesetsTrend} />
+          <p className={styles.sectionLabel}>Trend chart</p>
+          <TotalChangesetsLineGraph
+            points={nodesPerMinuteTrend}
+            title="Nodes per minute trend"
+            subtitle="Live throughput line chart"
+            ariaLabel="Nodes per minute line chart"
+            primaryLabel="Nodes/min"
+            primaryValueUnit="nodes/min"
+          />
         </section>
 
         <section className={styles.sectionWrap}>
@@ -518,6 +505,8 @@ export default function HomeClient({
             largestChangesetHour={liveData.largestChangesetHour}
             uniqueMappersHour={liveData.uniqueMappersHour}
             newNodesHour={liveData.newNodesHour}
+            activeCountriesHour={liveData.topCountriesHour.length}
+            totalSovereignCountries={totalSovereignCountries}
           />
         </section>
 

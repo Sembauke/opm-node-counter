@@ -30,7 +30,9 @@ export default function StatsSection({
         <p className={styles.statValue}>
           <CountUp preserveValue end={totalNodes} separator="," />
         </p>
-        <p className={styles.statHint}>Current known node volume across OpenStreetMap</p>
+        <p className={styles.statHint}>
+          Cumulative nodes ever created in OpenStreetMap (not current alive nodes)
+        </p>
       </article>
 
       <article className={styles.statCard}>

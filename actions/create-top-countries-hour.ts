@@ -1,6 +1,7 @@
 'use server'
 
 import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
+import { isSovereignCountryCode } from "../lib/sovereign-countries";
 
 const insertChangesetForCountry = db.prepare(`
   INSERT OR IGNORE INTO top_country_changesets_hour (bucket_hour, changeset_id, country_code)
@@ -19,7 +20,6 @@ const selectTopCountries = db.prepare(`
   FROM top_countries_hour
   WHERE bucket_hour = ?
   ORDER BY total_changes DESC, country_code ASC
-  LIMIT 12
 `);
 
 const trackTopCountryForChangeset = db.transaction(
@@ -38,6 +38,10 @@ function normalizeCountryCode(countryCode: string | null) {
 
   const normalized = countryCode.trim().toUpperCase();
   if (!/^[A-Z]{2}$/.test(normalized)) {
+    return null;
+  }
+
+  if (!isSovereignCountryCode(normalized)) {
     return null;
   }
 
@@ -61,5 +65,6 @@ export async function sendOrGetTopCountriesHour(
   return rows.map((row) => ({
     countryCode: row.countryCode,
     count: Number(row.count),
-  }));
+  }))
+    .filter((row) => isSovereignCountryCode(row.countryCode));
 }

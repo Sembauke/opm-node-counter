@@ -55,6 +55,12 @@ const SCHEMA_SQL = `
     total_changesets INTEGER NOT NULL DEFAULT 0
   );
 
+  CREATE TABLE IF NOT EXISTS nodes_per_minute_trend_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp_ms INTEGER NOT NULL,
+    nodes_per_minute INTEGER NOT NULL DEFAULT 0
+  );
+
   CREATE TABLE IF NOT EXISTS average_changes_hour (
     bucket_hour INTEGER PRIMARY KEY,
     total_changes INTEGER NOT NULL DEFAULT 0,
@@ -138,6 +144,7 @@ export function resetAllStats() {
     DELETE FROM top_countries_hour;
     DELETE FROM changesets_trend;
     DELETE FROM changesets_trend_points;
+    DELETE FROM nodes_per_minute_trend_points;
     DELETE FROM average_changes_hour;
     DELETE FROM largest_changeset_hour;
     DELETE FROM new_nodes_hour;

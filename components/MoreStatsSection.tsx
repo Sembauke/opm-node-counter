@@ -6,6 +6,8 @@ interface MoreStatsSectionProps {
   largestChangesetHour: number;
   uniqueMappersHour: number;
   newNodesHour: number;
+  activeCountriesHour: number;
+  totalSovereignCountries: number;
 }
 
 export default function MoreStatsSection({
@@ -13,6 +15,8 @@ export default function MoreStatsSection({
   largestChangesetHour,
   uniqueMappersHour,
   newNodesHour,
+  activeCountriesHour,
+  totalSovereignCountries,
 }: MoreStatsSectionProps) {
   return (
     <div className={styles.secondaryStatsGrid}>
@@ -46,6 +50,17 @@ export default function MoreStatsSection({
           <CountUp preserveValue end={newNodesHour} separator="," />
         </p>
         <p className={styles.statHint}>Aggregate node growth captured during this hour</p>
+      </article>
+
+      <article className={styles.statCard}>
+        <p className={styles.statLabel}>Active Countries This Hour</p>
+        <p className={styles.statValue}>
+          <CountUp preserveValue end={activeCountriesHour} separator="," /> /{" "}
+          {totalSovereignCountries.toLocaleString()}
+        </p>
+        <p className={styles.statHint}>
+          Countries with detected edits this hour out of tracked sovereign countries
+        </p>
       </article>
     </div>
   );
