@@ -7,8 +7,10 @@ export type Changeset = {
   created_at?: string,
   timestamp?: string,
   id: number;
+  countryCode?: string | null;
+  countryFlag?: string | null;
   tags: {
     comment: string;
   };
   user: string;
-}; 
+};

@@ -1,0 +1,174 @@
+:root {
+  --font-body: var(--font-geist-sans), "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), "SFMono-Regular", Consolas, monospace;
+}
+
+html.light {
+  color-scheme: light;
+
+  --bg: #f3f7fd;
+  --bg-soft: #eef4fb;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-strong: rgba(255, 255, 255, 0.9);
+  --border: rgba(12, 49, 103, 0.12);
+  --border-strong: rgba(12, 49, 103, 0.18);
+  --shadow-soft: 0 14px 32px rgba(7, 37, 88, 0.12);
+
+  --text-strong: #102542;
+  --text-muted: #40628f;
+  --text-muted-soft: #5877a0;
+
+  --accent-600: #2164d8;
+  --accent-700: #194ea9;
+  --link-underline: rgba(19, 70, 158, 0.24);
+  --link-underline-hover: rgba(19, 70, 158, 0.52);
+
+  --art-a: rgba(27, 121, 255, 0.2);
+  --art-b: rgba(21, 179, 180, 0.22);
+  --art-c: rgba(255, 174, 90, 0.14);
+  --art-grid: rgba(10, 36, 66, 0.06);
+
+  --icon-surface: linear-gradient(145deg, rgba(238, 246, 255, 0.95), rgba(219, 234, 254, 0.82));
+  --icon-border: rgba(39, 96, 210, 0.24);
+  --icon-shadow: 0 9px 20px rgba(14, 43, 84, 0.16);
+
+  --interactive-border: rgba(24, 95, 200, 0.3);
+  --interactive-shadow: 0 16px 30px rgba(20, 58, 116, 0.15);
+  --badge-bg: rgba(22, 101, 216, 0.1);
+  --badge-border: rgba(22, 101, 216, 0.18);
+
+  --podium-first-bg: linear-gradient(165deg, #ffecb8 0%, #f7d873 100%);
+  --podium-first-border: rgba(149, 102, 8, 0.42);
+  --podium-first-rank: #835000;
+  --podium-first-name: #5b3900;
+  --podium-first-meta: #7a4d00;
+
+  --podium-second-bg: linear-gradient(165deg, #e2ecf8 0%, #b9cde7 100%);
+  --podium-second-border: rgba(67, 98, 136, 0.36);
+  --podium-second-rank: #365070;
+  --podium-second-name: #22334a;
+  --podium-second-meta: #2f4661;
+
+  --podium-third-bg: linear-gradient(165deg, #f7dfce 0%, #d5a98b 100%);
+  --podium-third-border: rgba(128, 82, 50, 0.36);
+  --podium-third-rank: #744026;
+  --podium-third-name: #4d2817;
+  --podium-third-meta: #5b2f1c;
+
+  --changeset-new-start-bg: linear-gradient(
+    145deg,
+    rgba(182, 224, 255, 0.38),
+    rgba(214, 239, 255, 0.74)
+  );
+  --changeset-new-mid-bg: linear-gradient(
+    145deg,
+    rgba(148, 204, 255, 0.32),
+    rgba(191, 227, 255, 0.55)
+  );
+  --changeset-new-start-border: rgba(28, 119, 211, 0.44);
+  --changeset-new-mid-border: rgba(28, 119, 211, 0.62);
+  --changeset-new-glow: rgba(41, 126, 222, 0.32);
+  --changeset-new-sweep: rgba(255, 255, 255, 0.54);
+
+  --selection-bg: rgba(34, 95, 201, 0.24);
+  --selection-text: #0a1d39;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --bg: #070d18;
+  --bg-soft: #0a1324;
+  --surface: rgba(13, 22, 39, 0.84);
+  --surface-strong: rgba(15, 26, 45, 0.92);
+  --border: rgba(137, 164, 211, 0.2);
+  --border-strong: rgba(137, 164, 211, 0.3);
+  --shadow-soft: 0 16px 38px rgba(0, 0, 0, 0.42);
+
+  --text-strong: #e6eefb;
+  --text-muted: #9cb1d3;
+  --text-muted-soft: #b4c4df;
+
+  --accent-600: #4f8df4;
+  --accent-700: #79aaf7;
+  --link-underline: rgba(131, 172, 245, 0.45);
+  --link-underline-hover: rgba(166, 198, 255, 0.8);
+
+  --art-a: rgba(47, 116, 221, 0.28);
+  --art-b: rgba(21, 152, 146, 0.24);
+  --art-c: rgba(209, 139, 75, 0.18);
+  --art-grid: rgba(114, 144, 193, 0.12);
+
+  --icon-surface: linear-gradient(145deg, rgba(25, 40, 68, 0.92), rgba(18, 31, 56, 0.92));
+  --icon-border: rgba(123, 159, 227, 0.32);
+  --icon-shadow: 0 11px 24px rgba(0, 0, 0, 0.38);
+
+  --interactive-border: rgba(117, 165, 243, 0.44);
+  --interactive-shadow: 0 18px 30px rgba(0, 0, 0, 0.35);
+  --badge-bg: rgba(80, 141, 245, 0.22);
+  --badge-border: rgba(133, 176, 250, 0.42);
+
+  --podium-first-bg: linear-gradient(160deg, #6b5014 0%, #3e2d09 100%);
+  --podium-first-border: rgba(242, 199, 84, 0.44);
+  --podium-first-rank: #f0ce78;
+  --podium-first-name: #fff2cd;
+  --podium-first-meta: #f4d996;
+
+  --podium-second-bg: linear-gradient(160deg, #4a5f7a 0%, #27384f 100%);
+  --podium-second-border: rgba(171, 201, 233, 0.4);
+  --podium-second-rank: #c1d9f2;
+  --podium-second-name: #e7f2ff;
+  --podium-second-meta: #c9def3;
+
+  --podium-third-bg: linear-gradient(160deg, #704a35 0%, #422a1d 100%);
+  --podium-third-border: rgba(224, 165, 127, 0.42);
+  --podium-third-rank: #f0c1a4;
+  --podium-third-name: #ffe9dd;
+  --podium-third-meta: #f6c9af;
+
+  --changeset-new-start-bg: linear-gradient(
+    145deg,
+    rgba(34, 92, 164, 0.34),
+    rgba(25, 58, 106, 0.56)
+  );
+  --changeset-new-mid-bg: linear-gradient(
+    145deg,
+    rgba(52, 121, 208, 0.35),
+    rgba(30, 81, 150, 0.52)
+  );
+  --changeset-new-start-border: rgba(115, 173, 248, 0.5);
+  --changeset-new-mid-border: rgba(140, 190, 252, 0.72);
+  --changeset-new-glow: rgba(73, 147, 240, 0.4);
+  --changeset-new-sweep: rgba(184, 219, 255, 0.17);
+
+  --selection-bg: rgba(100, 154, 247, 0.35);
+  --selection-text: #f2f7ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-strong);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}

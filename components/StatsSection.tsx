@@ -1,7 +1,8 @@
-import { Box, Text } from "@chakra-ui/react";
-import styles from "../app/page.module.css";
+"use client";
+
+import { useEffect, useState } from "react";
 import CountUp from "react-countup";
-import React from "react";
+import styles from "../app/page.module.css";
 
 interface StatsSectionProps {
   totalNodes: number;
@@ -9,34 +10,52 @@ interface StatsSectionProps {
   nodesPerMinute: number;
 }
 
-const StatsSection: React.FC<StatsSectionProps> = ({ totalNodes, totalChangesets, nodesPerMinute }) => (
-  <div className={styles["stats-section"]}>
-    <Box className={styles["glass-card"]}>
-      <Text fontSize="2xl" color="#b3eaff" fontWeight={700} mb={2}>
-        <span role="img" aria-label="nodes" style={{marginRight: 6}}>🧭</span>
-        Total Nodes Distributed
-      </Text>
-      <Text fontSize="2.5rem" color="#eaffb3" fontWeight={800}>
-        <CountUp className="counter" preserveValue={true} end={totalNodes} scrollSpyOnce />
-      </Text>
-    </Box>
-    <Box className={styles["glass-card"]}>
-      <Text fontSize="2xl" color="#b3eaff" fontWeight={700} mb={2}>
-        <span role="img" aria-label="changesets" style={{marginRight: 6}}>🌍</span>
-        Total Changesets
-      </Text>
-      <Text fontSize="2.5rem" color="#eaffb3" fontWeight={800}>
-        <CountUp className="counter" preserveValue={true} end={totalChangesets} />
-      </Text>
-    </Box>
-    <Box className={styles["glass-card"]}>
-      <Text fontSize="2xl" color="#b3eaff" fontWeight={700} mb={2}>
-        <span role="img" aria-label="speed" style={{marginRight: 6}}>⚡</span>
-        Nodes per Minute
-      </Text>
-      <Text fontSize="2.5rem" color="#eaffb3" fontWeight={800}>{nodesPerMinute}</Text>
-    </Box>
-  </div>
-);
+export default function StatsSection({
+  totalNodes,
+  totalChangesets,
+  nodesPerMinute,
+}: StatsSectionProps) {
+  const [ratePulse, setRatePulse] = useState(false);
 
-export default StatsSection; 
+  useEffect(() => {
+    setRatePulse(true);
+    const timer = window.setTimeout(() => setRatePulse(false), 820);
+    return () => window.clearTimeout(timer);
+  }, [nodesPerMinute]);
+
+  return (
+    <div className={styles.primaryStatsGrid}>
+      <article className={styles.statCard}>
+        <p className={styles.statLabel}>Total Nodes</p>
+        <p className={styles.statValue}>
+          <CountUp preserveValue end={totalNodes} separator="," />
+        </p>
+        <p className={styles.statHint}>Current known node volume across OpenStreetMap</p>
+      </article>
+
+      <article className={styles.statCard}>
+        <p className={styles.statLabel}>Total Changesets</p>
+        <p className={styles.statValue}>
+          <CountUp preserveValue end={totalChangesets} separator="," />
+        </p>
+        <p className={styles.statHint}>All recorded mapping submissions to date</p>
+      </article>
+
+      <article
+        className={`${styles.statCard} ${styles.nodesPerMinuteCard}${
+          ratePulse ? ` ${styles.nodesPerMinuteCardPulse}` : ""
+        }`}
+      >
+        <p className={styles.statLabel}>Nodes per Minute (est.)</p>
+        <p
+          className={`${styles.statValue} ${styles.nodesPerMinuteValue}${
+            ratePulse ? ` ${styles.nodesPerMinuteValuePulse}` : ""
+          }`}
+        >
+          <CountUp preserveValue end={nodesPerMinute} separator="," />
+        </p>
+        <p className={styles.statHint}>Rolling estimate based on newly observed closed changesets</p>
+      </article>
+    </div>
+  );
+}
