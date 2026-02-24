@@ -76,6 +76,15 @@ const SCHEMA_SQL = `
     bucket_hour INTEGER PRIMARY KEY,
     total_new_nodes INTEGER NOT NULL DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS total_country_changeset_seen (
+    changeset_id INTEGER PRIMARY KEY
+  );
+
+  CREATE TABLE IF NOT EXISTS total_country_changes (
+    country_code TEXT PRIMARY KEY,
+    total_changes INTEGER NOT NULL DEFAULT 0
+  );
 `;
 
 function getDatabasePath() {

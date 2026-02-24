@@ -220,7 +220,7 @@
   min-height: 168px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 0.45rem;
   box-shadow: var(--shadow-soft);
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -229,6 +229,31 @@
   transform: translateY(-2px);
   border-color: var(--interactive-border);
   box-shadow: var(--interactive-shadow);
+}
+
+.statLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.statInfoBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.statInfoBtn:hover {
+  opacity: 1;
 }
 
 .statLabel {
@@ -241,7 +266,7 @@
 }
 
 .statValue {
-  margin: 0.45rem 0 0;
+  margin: 0;
   color: var(--text-strong);
   font-size: clamp(1.58rem, 2.75vw, 2.18rem);
   line-height: 1.1;
@@ -257,7 +282,7 @@
 }
 
 .statCompare {
-  margin: 0.34rem 0 0;
+  margin: 0;
   color: var(--text-muted);
   font-size: 0.79rem;
   line-height: 1.35;
@@ -596,6 +621,33 @@
   margin: 0.42rem 0 0;
   color: var(--text-muted-soft);
   font-size: 0.91rem;
+}
+
+.countryAllLink {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.countryAllButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.48rem 1.1rem;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.83rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.countryAllButton:hover {
+  border-color: var(--interactive-border);
+  color: var(--text-strong);
+  box-shadow: var(--interactive-shadow);
 }
 
 .lineChartWrap {

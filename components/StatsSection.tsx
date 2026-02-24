@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import CountUp from "react-countup";
+import { FiInfo } from "react-icons/fi";
+import { Tooltip } from "./ui/tooltip";
 import styles from "../app/page.module.css";
 
 interface StatsSectionProps {
@@ -28,21 +30,31 @@ export default function StatsSection({
   return (
     <div className={styles.primaryStatsGrid}>
       <article className={styles.statCard}>
-        <p className={styles.statLabel}>Total Nodes</p>
+        <div className={styles.statLabelRow}>
+          <p className={styles.statLabel}>Total Nodes</p>
+          <Tooltip content="Cumulative nodes ever created in OpenStreetMap (not current alive nodes)" showArrow>
+            <button className={styles.statInfoBtn} aria-label="More information">
+              <FiInfo />
+            </button>
+          </Tooltip>
+        </div>
         <p className={styles.statValue}>
           <CountUp preserveValue end={totalNodes} separator="," />
-        </p>
-        <p className={styles.statHint}>
-          Cumulative nodes ever created in OpenStreetMap (not current alive nodes)
         </p>
       </article>
 
       <article className={styles.statCard}>
-        <p className={styles.statLabel}>Total Changesets</p>
+        <div className={styles.statLabelRow}>
+          <p className={styles.statLabel}>Total Changesets</p>
+          <Tooltip content="All recorded mapping submissions to date" showArrow>
+            <button className={styles.statInfoBtn} aria-label="More information">
+              <FiInfo />
+            </button>
+          </Tooltip>
+        </div>
         <p className={styles.statValue}>
           <CountUp preserveValue end={totalChangesets} separator="," />
         </p>
-        <p className={styles.statHint}>All recorded mapping submissions to date</p>
       </article>
 
       <article
@@ -50,7 +62,14 @@ export default function StatsSection({
           ratePulse ? ` ${styles.nodesPerMinuteCardPulse}` : ""
         }`}
       >
-        <p className={styles.statLabel}>Nodes per Minute (est.)</p>
+        <div className={styles.statLabelRow}>
+          <p className={styles.statLabel}>Nodes per Minute (est.)</p>
+          <Tooltip content="Rolling estimate based on newly observed closed changesets" showArrow>
+            <button className={styles.statInfoBtn} aria-label="More information">
+              <FiInfo />
+            </button>
+          </Tooltip>
+        </div>
         <p
           className={`${styles.statValue} ${styles.nodesPerMinuteValue}${
             ratePulse ? ` ${styles.nodesPerMinuteValuePulse}` : ""
@@ -58,7 +77,6 @@ export default function StatsSection({
         >
           <CountUp preserveValue end={nodesPerMinute} separator="," />
         </p>
-        <p className={styles.statHint}>Rolling estimate based on newly observed closed changesets</p>
         <p className={styles.statCompare}>
           All-time high: {nodesPerMinuteAllTimeHigh.toLocaleString()} nodes/min
         </p>

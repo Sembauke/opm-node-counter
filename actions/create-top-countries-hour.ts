@@ -15,6 +15,17 @@ const upsertTopCountry = db.prepare(`
     total_changes = top_countries_hour.total_changes + excluded.total_changes
 `);
 
+const insertAllTimeChangeset = db.prepare(`
+  INSERT OR IGNORE INTO total_country_changeset_seen (changeset_id) VALUES (?)
+`);
+
+const upsertAllTimeCountryChanges = db.prepare(`
+  INSERT INTO total_country_changes (country_code, total_changes)
+  VALUES (?, ?)
+  ON CONFLICT(country_code) DO UPDATE SET
+    total_changes = total_country_changes.total_changes + excluded.total_changes
+`);
+
 const selectTopCountries = db.prepare(`
   SELECT country_code AS countryCode, total_changes AS count
   FROM top_countries_hour
@@ -27,6 +38,11 @@ const trackTopCountryForChangeset = db.transaction(
     const insertResult = insertChangesetForCountry.run(bucketHour, changesetId, countryCode);
     if (insertResult.changes > 0) {
       upsertTopCountry.run(bucketHour, countryCode, changes);
+    }
+
+    const allTimeResult = insertAllTimeChangeset.run(changesetId);
+    if (allTimeResult.changes > 0) {
+      upsertAllTimeCountryChanges.run(countryCode, changes);
     }
   }
 );

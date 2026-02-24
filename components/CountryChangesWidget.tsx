@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { FiInfo } from "react-icons/fi";
+import { Tooltip } from "./ui/tooltip";
 import styles from "../app/page.module.css";
 
 interface CountryChangesItem {
@@ -43,15 +46,18 @@ export default function CountryChangesWidget({
   return (
     <section className={styles.sectionCard}>
       <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>Most edited countries</h2>
-        <p className={styles.sectionCaption}>Total changes grouped by country this hour</p>
+        <div className={styles.statLabelRow}>
+          <h2 className={styles.sectionTitle}>Most edited countries</h2>
+          <Tooltip content="Total changes grouped by country this hour" showArrow>
+            <button className={styles.statInfoBtn} aria-label="More information">
+              <FiInfo />
+            </button>
+          </Tooltip>
+        </div>
       </div>
       <p className={styles.sectionCompare}>
-        Active countries: {currentActive.toLocaleString()} this hour •{" "}
-        {previousActive.toLocaleString()} last hour
         {currentLeader ? (
           <>
-            {" • "}
             Current leader: {toFlagEmoji(currentLeader.countryCode.toUpperCase())}{" "}
             {getCountryName(currentLeader.countryCode)} ({currentLeader.count.toLocaleString()})
           </>
@@ -89,6 +95,12 @@ export default function CountryChangesWidget({
           })}
         </ul>
       )}
+
+      <div className={styles.countryAllLink}>
+        <Link href="/countries" className={styles.countryAllButton}>
+          View all countries
+        </Link>
+      </div>
     </section>
   );
 }

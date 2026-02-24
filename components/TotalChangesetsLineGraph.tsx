@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -36,15 +36,8 @@ interface ChartRow {
   secondary: number | null;
 }
 
-interface HoverState {
-  timestamp: number;
-  primary: number | null;
-  secondary: number | null;
-}
-
 const CHART_HEIGHT = 280;
 const MAX_RENDER_POINTS = 420;
-const EXPECTED_SAMPLE_INTERVAL_MS = 6000;
 const SESSION_GAP_THRESHOLD_MS = 30 * 1000;
 const PRIMARY_AXIS_MAX = 100_000;
 
@@ -245,18 +238,6 @@ export default function TotalChangesetsLineGraph({
 
   const isPrimaryDownsampled = primaryRenderPoints.length < segmentedPrimary.length;
   const isSecondaryDownsampled = secondaryRenderPoints.length < segmentedSecondary.length;
-  const detectedPrimaryGaps = segmentedPrimary.reduce((count, point, index, source) => {
-    if (index === 0) {
-      return count;
-    }
-
-    const gapMs = point.timestamp - source[index - 1].timestamp;
-    if (gapMs > SESSION_GAP_THRESHOLD_MS) {
-      return count + 1;
-    }
-    return count;
-  }, 0);
-
   const primaryValues = primaryRenderPoints.map((point) => point.value);
   const primaryMinRaw = Math.min(...primaryValues);
   const primaryMaxRaw = Math.max(...primaryValues);
@@ -276,13 +257,6 @@ export default function TotalChangesetsLineGraph({
   const safeSecondaryDomainMax =
     secondaryMaxRaw <= secondaryMinRaw ? secondaryMinRaw + 1 : secondaryMaxRaw;
   const [secondaryAxisMin, secondaryAxisMax] = getNiceDomain(secondaryMinRaw, safeSecondaryDomainMax);
-
-  const clippedPrimaryCount = primaryRenderPoints.reduce((count, point) => {
-    if (point.value < primaryDomainMin || point.value > safePrimaryDomainMax) {
-      return count + 1;
-    }
-    return count;
-  }, 0);
 
   const primaryByTimestamp = new Map<number, number>();
   const primaryRawByTimestamp = new Map<number, number>();
@@ -308,34 +282,6 @@ export default function TotalChangesetsLineGraph({
       primary: primaryByTimestamp.get(timestamp) ?? null,
       secondary: secondaryByTimestamp.get(timestamp) ?? null,
     }));
-
-  const primaryCurrent = segmentedPrimary[segmentedPrimary.length - 1].value;
-  const primaryStart = segmentedPrimary[0].value;
-  const primaryDelta = primaryCurrent - primaryStart;
-  const secondaryCurrent = hasSecondarySeries
-    ? segmentedSecondary[segmentedSecondary.length - 1].value
-    : null;
-
-  const [hoverState, setHoverState] = useState<HoverState | null>(null);
-
-  const handleChartMouseMove = (state: {
-    activeLabel?: unknown;
-    activePayload?: Array<{ dataKey?: string; value?: unknown }>;
-  }) => {
-    if (!state || typeof state.activeLabel !== "number" || !Array.isArray(state.activePayload)) {
-      return;
-    }
-
-    const timestamp = state.activeLabel;
-    const hoverPrimary = primaryRawByTimestamp.get(timestamp) ?? null;
-    const hoverSecondary = secondaryRawByTimestamp.get(timestamp) ?? null;
-
-    setHoverState({
-      timestamp,
-      primary: hoverPrimary,
-      secondary: hoverSecondary,
-    });
-  };
 
   return (
     <section className={styles.sectionCard}>
@@ -370,8 +316,6 @@ export default function TotalChangesetsLineGraph({
               data={chartRows}
               baseValue="dataMin"
               margin={{ top: 10, right: hasSecondarySeries ? 24 : 12, left: 8, bottom: 8 }}
-              onMouseMove={handleChartMouseMove}
-              onMouseLeave={() => setHoverState(null)}
             >
               <defs>
                 <linearGradient id={`${gradientId}-primary`} x1="0" y1="0" x2="0" y2="1">
@@ -484,50 +428,6 @@ export default function TotalChangesetsLineGraph({
         </div>
       </div>
 
-      <div className={styles.lineChartMeta}>
-        <span>{primaryLabel} start: {formatValue(primaryStart, primaryValueUnit)}</span>
-        <span>
-          {primaryLabel} delta: {primaryDelta >= 0 ? "+" : ""}
-          {formatValue(primaryDelta, primaryValueUnit)}
-        </span>
-        <span>{primaryLabel} current: {formatValue(primaryCurrent, primaryValueUnit)}</span>
-        {secondaryCurrent !== null ? (
-          <span>
-            {secondaryLabel} current: {formatValue(secondaryCurrent, secondaryValueUnit)}
-          </span>
-        ) : null}
-      </div>
-
-      <p className={styles.lineChartHint}>
-        {formatTime(segmentedPrimary[0].timestamp)} to{" "}
-        {formatTime(segmentedPrimary[segmentedPrimary.length - 1].timestamp)}
-        {detectedPrimaryGaps > 0
-          ? ` • ${detectedPrimaryGaps.toLocaleString()} data gap${
-              detectedPrimaryGaps === 1 ? "" : "s"
-            } detected`
-          : ""}
-        {clippedPrimaryCount > 0
-          ? ` • ${clippedPrimaryCount.toLocaleString()} value${
-              clippedPrimaryCount === 1 ? "" : "s"
-            } above ${PRIMARY_AXIS_MAX.toLocaleString()} clipped`
-          : ""}
-      </p>
-
-      <p className={styles.lineChartInspect}>
-        {hoverState
-          ? `${formatTime(hoverState.timestamp)} • ${primaryLabel} ${formatValue(
-              hoverState.primary ?? primaryCurrent,
-              primaryValueUnit
-            )}${
-              hasSecondarySeries
-                ? ` • ${secondaryLabel} ${formatValue(
-                    hoverState.secondary ?? secondaryCurrent ?? 0,
-                    secondaryValueUnit
-                  )}`
-                : ""
-            }`
-          : "Hover the chart to inspect exact values at any point."}
-      </p>
     </section>
   );
 }

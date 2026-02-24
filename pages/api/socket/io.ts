@@ -13,13 +13,14 @@ import {
 } from "@/actions/create-nodes-per-minute";
 import { sendOrGetNodesPerMinuteTrend } from "@/actions/create-nodes-per-minute-trend";
 import { sendOrGetTotalChangesetsTrend } from "@/actions/create-total-changesets-trend";
+import { getAllCountryChanges } from "@/actions/get-all-country-changes";
 import { enrichChangesetsWithCountry } from "@/lib/changeset-country";
 import { convertXML } from "simple-xml-to-json";
 import type { Changeset } from "@/types/changeset";
 
 const STATS_INTERVAL_MS = 6000;
 const OSM_CHANGESETS_URL = "https://www.openstreetmap.org/api/0.6/changesets.json?limit=25&closed=true";
-const STATS_LOOP_VERSION = "country-flags-v17";
+const STATS_LOOP_VERSION = "country-flags-v18";
 const NODES_PER_MINUTE_SMOOTHING_ALPHA = 0.34;
 const NODE_RATE_WINDOW_MS = 90_000;
 const NODE_RATE_MIN_ELAPSED_MS = 18_000;
@@ -372,6 +373,7 @@ export default async function handler(req: any, res: any) {
         const uniqueMappersLastHour = await sendOrGetUniqueMappersHour(null, -1);
         const newNodesHour = await sendOrGetNewNodesHour();
         const newNodesLastHour = await sendOrGetNewNodesHour(null, -1);
+        const allCountryChanges = await getAllCountryChanges();
 
         io.emit("stats", {
           changesetBatch: enrichChangesetsWithCountry(changesetBatch),
@@ -394,6 +396,7 @@ export default async function handler(req: any, res: any) {
           largestChangesetBatch: getLargestChangeset(changesetBatch),
           newNodesHour,
           newNodesLastHour,
+          allCountryChanges,
           statsTimestampMs: nowMs,
         });
       } catch (error) {
