@@ -46,6 +46,7 @@ const CHART_HEIGHT = 280;
 const MAX_RENDER_POINTS = 420;
 const EXPECTED_SAMPLE_INTERVAL_MS = 6000;
 const SESSION_GAP_THRESHOLD_MS = 30 * 1000;
+const PRIMARY_AXIS_MAX = 100_000;
 
 function formatTime(timestamp: number) {
   return new Intl.DateTimeFormat(undefined, {
@@ -109,24 +110,6 @@ function getNiceDomain(min: number, max: number, includeZero = false) {
   const niceMax = Math.ceil(normalizedMax / step) * step;
   const fixedNiceMin = includeZero ? Math.min(niceMin, 0) : niceMin;
   return [fixedNiceMin, Math.max(niceMax, fixedNiceMin + step)] as const;
-}
-
-function quantile(sortedValues: number[], q: number) {
-  if (sortedValues.length === 0) {
-    return 0;
-  }
-
-  const clampedQ = Math.max(0, Math.min(1, q));
-  const index = (sortedValues.length - 1) * clampedQ;
-  const lower = Math.floor(index);
-  const upper = Math.ceil(index);
-
-  if (lower === upper) {
-    return sortedValues[lower];
-  }
-
-  const weight = index - lower;
-  return sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight;
 }
 
 function normalizePoints(points: ChangesetsTrendPoint[]) {
@@ -278,36 +261,14 @@ export default function TotalChangesetsLineGraph({
   const primaryMinRaw = Math.min(...primaryValues);
   const primaryMaxRaw = Math.max(...primaryValues);
 
-  let primaryDomainMin = primaryMinRaw;
-  let primaryDomainMax = primaryMaxRaw;
-  const shouldUseRobustPrimaryScale = !hasSecondarySeries && primaryRenderPoints.length >= 30;
-
-  if (shouldUseRobustPrimaryScale) {
-    const sortedPrimaryValues = [...primaryValues].sort((a, b) => a - b);
-    const q05 = quantile(sortedPrimaryValues, 0.05);
-    const q95 = quantile(sortedPrimaryValues, 0.95);
-    const robustRange = q95 - q05;
-
-    if (robustRange > 0) {
-      const padding = robustRange * 0.12;
-      const robustMin = q05 - padding;
-      const robustMax = q95 + padding;
-      const normalizedRobustMin = Math.max(0, robustMin);
-
-      if (
-        robustMax > normalizedRobustMin &&
-        robustMax < primaryMaxRaw &&
-        robustRange / Math.max(primaryMaxRaw - primaryMinRaw, 1) < 0.92
-      ) {
-        primaryDomainMin = normalizedRobustMin;
-        primaryDomainMax = robustMax;
-      }
-    }
-  }
-
-  const safePrimaryDomainMax =
-    primaryDomainMax <= primaryDomainMin ? primaryDomainMin + 1 : primaryDomainMax;
-  const [primaryAxisMin, primaryAxisMax] = getNiceDomain(primaryDomainMin, safePrimaryDomainMax);
+  const primaryDomainMin = Math.min(0, primaryMinRaw);
+  const uncappedPrimaryDomainMax = Math.max(primaryMaxRaw, primaryDomainMin + 1);
+  const safePrimaryDomainMax = Math.min(uncappedPrimaryDomainMax, PRIMARY_AXIS_MAX);
+  const [primaryAxisMin, primaryAxisMax] = getNiceDomain(
+    primaryDomainMin,
+    safePrimaryDomainMax,
+    true
+  );
 
   const secondaryValues = secondaryRenderPoints.map((point) => point.value);
   const secondaryMinRaw = secondaryValues.length > 0 ? Math.min(...secondaryValues) : 0;
@@ -546,9 +507,9 @@ export default function TotalChangesetsLineGraph({
             } detected`
           : ""}
         {clippedPrimaryCount > 0
-          ? ` • Scaled for readability (${clippedPrimaryCount.toLocaleString()} outlier${
+          ? ` • ${clippedPrimaryCount.toLocaleString()} value${
               clippedPrimaryCount === 1 ? "" : "s"
-            } clipped)`
+            } above ${PRIMARY_AXIS_MAX.toLocaleString()} clipped`
           : ""}
       </p>
 

@@ -22,12 +22,19 @@ interface HomeClientProps {
   totalChangesets: number;
   totalSovereignCountries: number;
   uniqueMappersHour: number;
+  uniqueMappersLastHour: number;
   topMappersHour: { user: string; count: number }[];
+  topMappersLastHour: { user: string; count: number }[];
   topCountriesHour: { countryCode: string; count: number }[];
+  topCountriesLastHour: { countryCode: string; count: number }[];
   averageChangesHour: number;
+  averageChangesLastHour: number;
   largestChangesetHour: number;
+  largestChangesetLastHour: number;
   nodesPerMinute: number;
+  nodesPerMinuteAllTimeHigh: number;
   newNodesHour?: number;
+  newNodesLastHour?: number;
   nodesPerMinuteTrend: ChangesetsTrendPoint[];
 }
 
@@ -36,12 +43,19 @@ interface LiveData {
   totalNodes: number;
   totalChangesets: number;
   uniqueMappersHour: number;
+  uniqueMappersLastHour: number;
   topMappersHour: { user: string; count: number }[];
+  topMappersLastHour: { user: string; count: number }[];
   topCountriesHour: { countryCode: string; count: number }[];
+  topCountriesLastHour: { countryCode: string; count: number }[];
   averageChangesHour: number;
+  averageChangesLastHour: number;
   largestChangesetHour: number;
+  largestChangesetLastHour: number;
   nodesPerMinute: number;
+  nodesPerMinuteAllTimeHigh: number;
   newNodesHour: number;
+  newNodesLastHour: number;
   statsTimestampMs: number;
 }
 
@@ -74,7 +88,8 @@ const MAX_FLAGS_PER_CHANGESET = 18;
 const MAX_FLAGS_PER_TICK = 84;
 const MAX_CONTRIBUTOR_PARTICLES_PER_TICK = 14;
 const MAX_ACTIVE_PARTICLES = 420;
-const TREND_CLIENT_LIMIT = 20000;
+const TREND_WINDOW_MS = 60 * 60 * 1000;
+const TREND_CLIENT_LIMIT = 1400;
 const FLAG_FALL_MIN_MS = 11_200;
 const FLAG_FALL_RANGE_MS = 5_400;
 const CONTRIBUTOR_FALL_MIN_MS = 12_800;
@@ -187,18 +202,40 @@ function mergeCountryData(nextBatch: Changeset[], previousBatch: Changeset[]): C
   });
 }
 
+function trimTrendToWindow(
+  points: ChangesetsTrendPoint[],
+  referenceTimestampMs: number = Date.now()
+) {
+  const cutoff = referenceTimestampMs - TREND_WINDOW_MS;
+  return points.filter((point) => point.timestamp >= cutoff);
+}
+
+function toSafeNonNegativeNumber(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+  return Math.max(Math.round(value), 0);
+}
+
 export default function HomeClient({
   changesetBatch: initialChangesetBatch,
   totalNodes: initialTotalNodes,
   totalChangesets: initialTotalChangesets,
   totalSovereignCountries,
   uniqueMappersHour: initialUniqueMappersHour,
+  uniqueMappersLastHour: initialUniqueMappersLastHour,
   topMappersHour: initialTopMappersHour,
+  topMappersLastHour: initialTopMappersLastHour,
   topCountriesHour: initialTopCountriesHour,
+  topCountriesLastHour: initialTopCountriesLastHour,
   averageChangesHour: initialAverageChangesHour,
+  averageChangesLastHour: initialAverageChangesLastHour,
   largestChangesetHour: initialLargestChangesetHour,
+  largestChangesetLastHour: initialLargestChangesetLastHour,
   nodesPerMinute: initialNodesPerMinute,
+  nodesPerMinuteAllTimeHigh: initialNodesPerMinuteAllTimeHigh,
   newNodesHour: initialNewNodesHour = 0,
+  newNodesLastHour: initialNewNodesLastHour = 0,
   nodesPerMinuteTrend: initialNodesPerMinuteTrend,
 }: HomeClientProps) {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -215,18 +252,32 @@ export default function HomeClient({
     totalNodes: initialTotalNodes,
     totalChangesets: initialTotalChangesets,
     uniqueMappersHour: initialUniqueMappersHour,
+    uniqueMappersLastHour: initialUniqueMappersLastHour,
     topMappersHour: initialTopMappersHour,
+    topMappersLastHour: initialTopMappersLastHour,
     topCountriesHour: initialTopCountriesHour,
+    topCountriesLastHour: initialTopCountriesLastHour,
     averageChangesHour: initialAverageChangesHour,
+    averageChangesLastHour: initialAverageChangesLastHour,
     largestChangesetHour: initialLargestChangesetHour,
+    largestChangesetLastHour: initialLargestChangesetLastHour,
     nodesPerMinute: initialNodesPerMinute,
+    nodesPerMinuteAllTimeHigh: Math.max(
+      initialNodesPerMinuteAllTimeHigh,
+      initialNodesPerMinute
+    ),
     newNodesHour: initialNewNodesHour,
+    newNodesLastHour: initialNewNodesLastHour,
     statsTimestampMs: Date.now(),
   });
   const [nodesPerMinuteTrend, setNodesPerMinuteTrend] = useState<ChangesetsTrendPoint[]>(
-    initialNodesPerMinuteTrend.length > 0
-      ? initialNodesPerMinuteTrend
-      : [{ timestamp: Date.now(), value: initialNodesPerMinute }]
+    (() => {
+      const initialWindowed = trimTrendToWindow(initialNodesPerMinuteTrend);
+      if (initialWindowed.length > 0) {
+        return initialWindowed;
+      }
+      return [{ timestamp: Date.now(), value: initialNodesPerMinute }];
+    })()
   );
 
   useEffect(() => {
@@ -234,8 +285,20 @@ export default function HomeClient({
 
     socket.on("stats", (data: Partial<LiveData>) => {
       setLiveData((prev) => {
+        const incomingRate = toSafeNonNegativeNumber(data.nodesPerMinute);
+        const incomingHigh = toSafeNonNegativeNumber(data.nodesPerMinuteAllTimeHigh);
+        const resolvedAllTimeHigh = Math.max(
+          prev.nodesPerMinuteAllTimeHigh,
+          incomingHigh ?? 0,
+          incomingRate ?? 0
+        );
+
         if (!data.changesetBatch) {
-          return { ...prev, ...data };
+          return {
+            ...prev,
+            ...data,
+            nodesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
+          };
         }
 
         const mergedBatch = mergeCountryData(data.changesetBatch, prev.changesetBatch);
@@ -243,10 +306,20 @@ export default function HomeClient({
         const previousCoverage = getCountryCoverage(prev.changesetBatch);
 
         if (incomingCoverage < 0.2 && previousCoverage > 0.5) {
-          return { ...prev, ...data, changesetBatch: prev.changesetBatch };
+          return {
+            ...prev,
+            ...data,
+            nodesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
+            changesetBatch: prev.changesetBatch,
+          };
         }
 
-        return { ...prev, ...data, changesetBatch: mergedBatch };
+        return {
+          ...prev,
+          ...data,
+          nodesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
+          changesetBatch: mergedBatch,
+        };
       });
     });
 
@@ -391,7 +464,8 @@ export default function HomeClient({
       }
 
       const next = [...prev, { timestamp: pointTimestamp, value: pointValue }];
-      return next.slice(-TREND_CLIENT_LIMIT);
+      const windowed = trimTrendToWindow(next, pointTimestamp);
+      return windowed.slice(-TREND_CLIENT_LIMIT);
     });
   }, [liveData.nodesPerMinute, liveData.statsTimestampMs]);
 
@@ -483,6 +557,7 @@ export default function HomeClient({
             totalNodes={liveData.totalNodes}
             totalChangesets={liveData.totalChangesets}
             nodesPerMinute={liveData.nodesPerMinute}
+            nodesPerMinuteAllTimeHigh={liveData.nodesPerMinuteAllTimeHigh}
           />
         </section>
 
@@ -502,21 +577,32 @@ export default function HomeClient({
           <p className={styles.sectionLabel}>Current hour</p>
           <MoreStatsSection
             averageChangesHour={liveData.averageChangesHour}
+            averageChangesLastHour={liveData.averageChangesLastHour}
             largestChangesetHour={liveData.largestChangesetHour}
+            largestChangesetLastHour={liveData.largestChangesetLastHour}
             uniqueMappersHour={liveData.uniqueMappersHour}
+            uniqueMappersLastHour={liveData.uniqueMappersLastHour}
             newNodesHour={liveData.newNodesHour}
+            newNodesLastHour={liveData.newNodesLastHour}
             activeCountriesHour={liveData.topCountriesHour.length}
+            activeCountriesLastHour={liveData.topCountriesLastHour.length}
             totalSovereignCountries={totalSovereignCountries}
           />
         </section>
 
         <section className={styles.sectionWrap}>
           <p className={styles.sectionLabel}>Country activity</p>
-          <CountryChangesWidget topCountriesHour={liveData.topCountriesHour} />
+          <CountryChangesWidget
+            topCountriesHour={liveData.topCountriesHour}
+            topCountriesLastHour={liveData.topCountriesLastHour}
+          />
         </section>
 
         <section className={styles.bottomGrid}>
-          <PodiumWidget topMappersHour={liveData.topMappersHour} />
+          <PodiumWidget
+            topMappersHour={liveData.topMappersHour}
+            topMappersLastHour={liveData.topMappersLastHour}
+          />
           <ChangesetListWidget
             changesetBatch={liveData.changesetBatch}
             newChangesetIds={newChangesetIds}

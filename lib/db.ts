@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 
-const HOURLY_RETENTION_BUCKETS = 25;
+const HOURLY_RETENTION_HOURS = 2;
 const SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS global_stats (
     key TEXT PRIMARY KEY,
@@ -122,7 +122,7 @@ export function pruneHourlyStats(bucketHour = getCurrentHourBucket()) {
     return;
   }
 
-  const cutoff = bucketHour - HOURLY_RETENTION_BUCKETS;
+  const cutoff = bucketHour - HOURLY_RETENTION_HOURS + 1;
   db.prepare("DELETE FROM unique_mappers_hour WHERE bucket_hour < ?").run(cutoff);
   db.prepare("DELETE FROM top_mapper_changesets_hour WHERE bucket_hour < ?").run(cutoff);
   db.prepare("DELETE FROM top_mappers_hour WHERE bucket_hour < ?").run(cutoff);

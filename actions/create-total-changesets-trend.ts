@@ -2,7 +2,7 @@
 
 import { db } from "../lib/db";
 
-const TREND_RETENTION_MS = 24 * 60 * 60 * 1000;
+const TREND_RETENTION_MS = 2 * 60 * 60 * 1000;
 const DEFAULT_TREND_LIMIT = 5000;
 
 const insertTrendPoint = db.prepare(`

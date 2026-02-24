@@ -15,14 +15,18 @@ const selectNewNodes = db.prepare(`
   WHERE bucket_hour = ?
 `);
 
-export async function sendOrGetNewNodesHour(count: number | null = null) {
+export async function sendOrGetNewNodesHour(
+  count: number | null = null,
+  hourOffset: number = 0
+) {
   const bucketHour = getCurrentHourBucket();
   pruneHourlyStats(bucketHour);
+  const targetBucketHour = bucketHour + Math.trunc(hourOffset);
 
-  if (count !== null && count > 0) {
-    upsertNewNodes.run(bucketHour, count);
+  if (count !== null && count > 0 && hourOffset === 0) {
+    upsertNewNodes.run(targetBucketHour, count);
   }
 
-  const row = selectNewNodes.get(bucketHour) as { total: number } | undefined;
+  const row = selectNewNodes.get(targetBucketHour) as { total: number } | undefined;
   return Number(row?.total ?? 0);
 }

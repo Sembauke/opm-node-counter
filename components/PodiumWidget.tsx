@@ -7,6 +7,7 @@ interface Mapper {
 
 interface PodiumWidgetProps {
   topMappersHour: Mapper[];
+  topMappersLastHour: Mapper[];
 }
 
 function MapperLink({ user }: { user: string }) {
@@ -22,8 +23,13 @@ function MapperLink({ user }: { user: string }) {
   );
 }
 
-export default function PodiumWidget({ topMappersHour }: PodiumWidgetProps) {
+export default function PodiumWidget({
+  topMappersHour,
+  topMappersLastHour,
+}: PodiumWidgetProps) {
   const mappers = topMappersHour.slice(0, 18);
+  const currentLeader = topMappersHour[0];
+  const lastLeader = topMappersLastHour[0];
 
   return (
     <section className={styles.sectionCard}>
@@ -31,6 +37,25 @@ export default function PodiumWidget({ topMappersHour }: PodiumWidgetProps) {
         <h2 className={styles.sectionTitle}>Top contributors</h2>
         <p className={styles.sectionCaption}>All contributors ranked by total changes this hour</p>
       </div>
+      <p className={styles.sectionCompare}>
+        Current leader:{" "}
+        {currentLeader ? (
+          <>
+            <MapperLink user={currentLeader.user} /> ({currentLeader.count.toLocaleString()})
+          </>
+        ) : (
+          "No data"
+        )}
+        {" • "}
+        Last hour leader:{" "}
+        {lastLeader ? (
+          <>
+            <MapperLink user={lastLeader.user} /> ({lastLeader.count.toLocaleString()})
+          </>
+        ) : (
+          "No data"
+        )}
+      </p>
 
       <div className={styles.mapperTable}>
         {mappers.length === 0 ? (

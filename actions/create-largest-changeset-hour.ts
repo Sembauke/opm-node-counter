@@ -18,14 +18,19 @@ const selectLargestChangeset = db.prepare(`
   WHERE bucket_hour = ?
 `);
 
-export async function sendOrGetLargestChangesetHour(user: string | null = null, changesCount: number | null = null) {
+export async function sendOrGetLargestChangesetHour(
+  user: string | null = null,
+  changesCount: number | null = null,
+  hourOffset: number = 0
+) {
   const bucketHour = getCurrentHourBucket();
   pruneHourlyStats(bucketHour);
+  const targetBucketHour = bucketHour + Math.trunc(hourOffset);
 
-  if (user && changesCount !== null) {
-    upsertLargestChangeset.run(bucketHour, changesCount);
+  if (user && changesCount !== null && hourOffset === 0) {
+    upsertLargestChangeset.run(targetBucketHour, changesCount);
   }
 
-  const row = selectLargestChangeset.get(bucketHour) as { value: number } | undefined;
+  const row = selectLargestChangeset.get(targetBucketHour) as { value: number } | undefined;
   return Number(row?.value ?? 0);
 }

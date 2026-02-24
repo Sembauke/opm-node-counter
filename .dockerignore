@@ -1,0 +1,11 @@
+node_modules
+.next
+data
+.git
+.gitignore
+README.md
+*.db
+*.db-shm
+*.db-wal
+.env*
+fly.toml

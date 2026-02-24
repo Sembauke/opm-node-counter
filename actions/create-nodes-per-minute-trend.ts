@@ -2,8 +2,9 @@
 
 import { db } from "../lib/db";
 
-const TREND_RETENTION_MS = 24 * 60 * 60 * 1000;
+const TREND_RETENTION_MS = 2 * 60 * 60 * 1000;
 const DEFAULT_TREND_LIMIT = 20000;
+const DEFAULT_TREND_WINDOW_MS = 60 * 60 * 1000;
 
 const insertTrendPoint = db.prepare(`
   INSERT INTO nodes_per_minute_trend_points (timestamp_ms, nodes_per_minute)
@@ -18,6 +19,7 @@ const pruneTrend = db.prepare(`
 const selectTrendPoints = db.prepare(`
   SELECT timestamp_ms AS timestamp, nodes_per_minute AS value
   FROM nodes_per_minute_trend_points
+  WHERE timestamp_ms >= ?
   ORDER BY timestamp_ms DESC
   LIMIT ?
 `);
@@ -29,10 +31,18 @@ function clampLimit(limit: number) {
   return Math.min(Math.floor(limit), 20000);
 }
 
+function clampWindowMs(windowMs: number) {
+  if (!Number.isFinite(windowMs) || windowMs <= 0) {
+    return DEFAULT_TREND_WINDOW_MS;
+  }
+  return Math.min(Math.floor(windowMs), TREND_RETENTION_MS);
+}
+
 export async function sendOrGetNodesPerMinuteTrend(
   nodesPerMinute: number | null = null,
   timestampMs: number = Date.now(),
-  limit: number = DEFAULT_TREND_LIMIT
+  limit: number = DEFAULT_TREND_LIMIT,
+  windowMs: number = DEFAULT_TREND_WINDOW_MS
 ) {
   const now = Number.isFinite(timestampMs) ? Math.floor(timestampMs) : Date.now();
   pruneTrend.run(now - TREND_RETENTION_MS);
@@ -41,7 +51,8 @@ export async function sendOrGetNodesPerMinuteTrend(
     insertTrendPoint.run(now, Math.max(Math.round(nodesPerMinute), 0));
   }
 
-  const rows = selectTrendPoints.all(clampLimit(limit)) as Array<{
+  const cutoffTimestampMs = now - clampWindowMs(windowMs);
+  const rows = selectTrendPoints.all(cutoffTimestampMs, clampLimit(limit)) as Array<{
     timestamp: number;
     value: number;
   }>;

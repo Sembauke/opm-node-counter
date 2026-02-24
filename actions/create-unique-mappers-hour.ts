@@ -13,14 +13,18 @@ const selectUniqueMapperCount = db.prepare(`
   WHERE bucket_hour = ?
 `);
 
-export async function sendOrGetUniqueMappersHour(user: string | null = null) {
+export async function sendOrGetUniqueMappersHour(
+  user: string | null = null,
+  hourOffset: number = 0
+) {
   const bucketHour = getCurrentHourBucket();
   pruneHourlyStats(bucketHour);
+  const targetBucketHour = bucketHour + Math.trunc(hourOffset);
 
-  if (user) {
-    insertUniqueMapper.run(bucketHour, user);
+  if (user && hourOffset === 0) {
+    insertUniqueMapper.run(targetBucketHour, user);
   }
 
-  const row = selectUniqueMapperCount.get(bucketHour) as { count: number } | undefined;
+  const row = selectUniqueMapperCount.get(targetBucketHour) as { count: number } | undefined;
   return row?.count ?? 0;
 }

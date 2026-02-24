@@ -16,15 +16,20 @@ const selectAverageChanges = db.prepare(`
   WHERE bucket_hour = ?
 `);
 
-export async function sendOrGetAverageChangesHour(user: string | null = null, changesCount: number | null = null) {
+export async function sendOrGetAverageChangesHour(
+  user: string | null = null,
+  changesCount: number | null = null,
+  hourOffset: number = 0
+) {
   const bucketHour = getCurrentHourBucket();
   pruneHourlyStats(bucketHour);
+  const targetBucketHour = bucketHour + Math.trunc(hourOffset);
 
-  if (user && changesCount !== null) {
-    upsertAverageChanges.run(bucketHour, changesCount);
+  if (user && changesCount !== null && hourOffset === 0) {
+    upsertAverageChanges.run(targetBucketHour, changesCount);
   }
 
-  const row = selectAverageChanges.get(bucketHour) as { total: number; count: number } | undefined;
+  const row = selectAverageChanges.get(targetBucketHour) as { total: number; count: number } | undefined;
   if (!row || row.count === 0) {
     return 0;
   }

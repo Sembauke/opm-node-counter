@@ -7,7 +7,10 @@ import { sendOrGetTopCountriesHour } from "@/actions/create-top-countries-hour";
 import { sendOrGetAverageChangesHour } from "@/actions/create-average-changes-hour";
 import { sendOrGetLargestChangesetHour } from "@/actions/create-largest-changeset-hour";
 import { sendOrGetNewNodesHour } from "@/actions/create-new-nodes-hour";
-import { sendOrGetNodesPerMinute } from "@/actions/create-nodes-per-minute";
+import {
+  sendOrGetNodesPerMinute,
+  sendOrGetNodesPerMinuteAllTimeHigh,
+} from "@/actions/create-nodes-per-minute";
 import { sendOrGetNodesPerMinuteTrend } from "@/actions/create-nodes-per-minute-trend";
 import { sendOrGetTotalChangesetsTrend } from "@/actions/create-total-changesets-trend";
 import { enrichChangesetsWithCountry } from "@/lib/changeset-country";
@@ -16,7 +19,7 @@ import type { Changeset } from "@/types/changeset";
 
 const STATS_INTERVAL_MS = 6000;
 const OSM_CHANGESETS_URL = "https://www.openstreetmap.org/api/0.6/changesets.json?limit=25&closed=true";
-const STATS_LOOP_VERSION = "country-flags-v14";
+const STATS_LOOP_VERSION = "country-flags-v17";
 const NODES_PER_MINUTE_SMOOTHING_ALPHA = 0.34;
 const NODE_RATE_WINDOW_MS = 90_000;
 const NODE_RATE_MIN_ELAPSED_MS = 18_000;
@@ -332,8 +335,9 @@ export default async function handler(req: any, res: any) {
         }
 
         const nodesPerMinute = Math.max(smoothedNodesPerMinute, 0);
-        await sendOrGetNodesPerMinute(nodesPerMinute);
-        await sendOrGetNodesPerMinuteTrend(nodesPerMinute, nowMs);
+        const persistedNodesPerMinute = await sendOrGetNodesPerMinute(nodesPerMinute);
+        const nodesPerMinuteAllTimeHigh = await sendOrGetNodesPerMinuteAllTimeHigh();
+        await sendOrGetNodesPerMinuteTrend(persistedNodesPerMinute, nowMs);
 
 
         // Persist fresh stats in SQL storage
@@ -357,25 +361,39 @@ export default async function handler(req: any, res: any) {
         }
 
         const topMappersHour = await sendOrGetTopMappersHour();
+        const topMappersLastHour = await sendOrGetTopMappersHour(null, 1, null, -1);
         const topCountriesHour = await sendOrGetTopCountriesHour();
+        const topCountriesLastHour = await sendOrGetTopCountriesHour(null, 1, null, -1);
         const averageChangesHour = await sendOrGetAverageChangesHour();
+        const averageChangesLastHour = await sendOrGetAverageChangesHour(null, null, -1);
         const largestChangesetHour = await sendOrGetLargestChangesetHour();
+        const largestChangesetLastHour = await sendOrGetLargestChangesetHour(null, null, -1);
         const uniqueMappersHour = await sendOrGetUniqueMappersHour();
+        const uniqueMappersLastHour = await sendOrGetUniqueMappersHour(null, -1);
+        const newNodesHour = await sendOrGetNewNodesHour();
+        const newNodesLastHour = await sendOrGetNewNodesHour(null, -1);
 
         io.emit("stats", {
           changesetBatch: enrichChangesetsWithCountry(changesetBatch),
           totalNodes: await sendOrGetNodeTotal(),
           totalChangesets,
           uniqueMappersHour,
+          uniqueMappersLastHour,
           topMappersHour,
+          topMappersLastHour,
           topCountriesHour,
+          topCountriesLastHour,
           averageChangesHour,
+          averageChangesLastHour,
           largestChangesetHour,
-          nodesPerMinute: await sendOrGetNodesPerMinute(),
+          largestChangesetLastHour,
+          nodesPerMinute: persistedNodesPerMinute,
+          nodesPerMinuteAllTimeHigh,
           topMappersBatch: getTopMappers(changesetBatch),
           averageChangesBatch: getAverageChanges(changesetBatch),
           largestChangesetBatch: getLargestChangeset(changesetBatch),
-          newNodesHour: await sendOrGetNewNodesHour(),
+          newNodesHour,
+          newNodesLastHour,
           statsTimestampMs: nowMs,
         });
       } catch (error) {

@@ -51,17 +51,19 @@ function normalizeCountryCode(countryCode: string | null) {
 export async function sendOrGetTopCountriesHour(
   countryCode: string | null = null,
   changes: number = 1,
-  changesetId: number | null = null
+  changesetId: number | null = null,
+  hourOffset: number = 0
 ) {
   const bucketHour = getCurrentHourBucket();
   pruneHourlyStats(bucketHour);
+  const targetBucketHour = bucketHour + Math.trunc(hourOffset);
 
   const normalizedCountryCode = normalizeCountryCode(countryCode);
-  if (normalizedCountryCode && changesetId !== null) {
-    trackTopCountryForChangeset(bucketHour, normalizedCountryCode, changes, changesetId);
+  if (normalizedCountryCode && changesetId !== null && hourOffset === 0) {
+    trackTopCountryForChangeset(targetBucketHour, normalizedCountryCode, changes, changesetId);
   }
 
-  const rows = selectTopCountries.all(bucketHour) as Array<{ countryCode: string; count: number }>;
+  const rows = selectTopCountries.all(targetBucketHour) as Array<{ countryCode: string; count: number }>;
   return rows.map((row) => ({
     countryCode: row.countryCode,
     count: Number(row.count),

@@ -8,12 +8,14 @@ interface StatsSectionProps {
   totalNodes: number;
   totalChangesets: number;
   nodesPerMinute: number;
+  nodesPerMinuteAllTimeHigh: number;
 }
 
 export default function StatsSection({
   totalNodes,
   totalChangesets,
   nodesPerMinute,
+  nodesPerMinuteAllTimeHigh,
 }: StatsSectionProps) {
   const [ratePulse, setRatePulse] = useState(false);
 
@@ -57,6 +59,9 @@ export default function StatsSection({
           <CountUp preserveValue end={nodesPerMinute} separator="," />
         </p>
         <p className={styles.statHint}>Rolling estimate based on newly observed closed changesets</p>
+        <p className={styles.statCompare}>
+          All-time high: {nodesPerMinuteAllTimeHigh.toLocaleString()} nodes/min
+        </p>
       </article>
     </div>
   );

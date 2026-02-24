@@ -31,14 +31,20 @@ const trackTopMapperForChangeset = db.transaction(
   }
 );
 
-export async function sendOrGetTopMappersHour(user: string | null = null, changes: number = 1, changesetId: number | null = null) {
+export async function sendOrGetTopMappersHour(
+  user: string | null = null,
+  changes: number = 1,
+  changesetId: number | null = null,
+  hourOffset: number = 0
+) {
   const bucketHour = getCurrentHourBucket();
   pruneHourlyStats(bucketHour);
+  const targetBucketHour = bucketHour + Math.trunc(hourOffset);
 
-  if (user && changesetId !== null) {
-    trackTopMapperForChangeset(bucketHour, user, changes, changesetId);
+  if (user && changesetId !== null && hourOffset === 0) {
+    trackTopMapperForChangeset(targetBucketHour, user, changes, changesetId);
   }
 
-  const rows = selectTopMappers.all(bucketHour) as Array<{ user: string; count: number }>;
+  const rows = selectTopMappers.all(targetBucketHour) as Array<{ user: string; count: number }>;
   return rows.map((row) => ({ user: row.user, count: Number(row.count) }));
 }
