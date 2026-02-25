@@ -11,6 +11,8 @@ import {
   sendOrGetNodesPerMinuteAllTimeHigh,
 } from "@/actions/create-nodes-per-minute";
 import { sendOrGetNodesPerMinuteTrend } from "@/actions/create-nodes-per-minute-trend";
+import { sendOrGetCommentQualityHour, sendOrGetCommentQualityAllTimeHigh } from "@/actions/create-comment-stats-hour";
+import { sendOrGetProjectTagsHour } from "@/actions/create-project-tags-hour";
 import { enrichChangesetsWithCountry } from "@/lib/changeset-country";
 import { TOTAL_SOVEREIGN_COUNTRIES } from "@/lib/sovereign-countries";
 import type { Changeset } from "@/types/changeset";
@@ -29,7 +31,7 @@ async function getLatestChangesets(): Promise<Changeset[]> {
 export default async function Home() {
 
   const changesetBatch = await getLatestChangesets();
-  const totalNodes = await sendOrGetNodeTotal();
+  const totalChanges = await sendOrGetNodeTotal();
   const totalChangesets = await sendOrGetChangesetTotal();
   const uniqueMappersHour = await sendOrGetUniqueMappersHour();
   const uniqueMappersLastHour = await sendOrGetUniqueMappersHour(null, -1);
@@ -43,13 +45,18 @@ export default async function Home() {
   const largestChangesetLastHour = await sendOrGetLargestChangesetHour(null, null, -1);
   const newNodesHour = await sendOrGetNewNodesHour();
   const newNodesLastHour = await sendOrGetNewNodesHour(null, -1);
-  const nodesPerMinute = await sendOrGetNodesPerMinute();
-  const nodesPerMinuteAllTimeHigh = await sendOrGetNodesPerMinuteAllTimeHigh();
-  const nodesPerMinuteTrend: ChangesetsTrendPoint[] = await sendOrGetNodesPerMinuteTrend();
+  const changesPerMinute = await sendOrGetNodesPerMinute();
+  const changesPerMinuteAllTimeHigh = await sendOrGetNodesPerMinuteAllTimeHigh();
+  const changesPerMinuteTrend: ChangesetsTrendPoint[] = await sendOrGetNodesPerMinuteTrend();
+  const commentQualityHour = await sendOrGetCommentQualityHour();
+  const commentQualityLastHour = await sendOrGetCommentQualityHour(null, null, -1);
+  const commentQualityAllTimeHigh = await sendOrGetCommentQualityAllTimeHigh();
+  const projectTagsHour = await sendOrGetProjectTagsHour();
+  const projectTagsLastHour = await sendOrGetProjectTagsHour(null, null, -1);
 
   return <HomeClient
     changesetBatch={changesetBatch}
-    totalNodes={totalNodes}
+    totalChanges={totalChanges}
     totalChangesets={totalChangesets}
     totalSovereignCountries={TOTAL_SOVEREIGN_COUNTRIES}
     uniqueMappersHour={uniqueMappersHour}
@@ -62,10 +69,15 @@ export default async function Home() {
     averageChangesLastHour={averageChangesLastHour}
     largestChangesetHour={largestChangesetHour}
     largestChangesetLastHour={largestChangesetLastHour}
-    nodesPerMinute={nodesPerMinute}
-    nodesPerMinuteAllTimeHigh={nodesPerMinuteAllTimeHigh}
+    changesPerMinute={changesPerMinute}
+    changesPerMinuteAllTimeHigh={changesPerMinuteAllTimeHigh}
     newNodesHour={newNodesHour}
     newNodesLastHour={newNodesLastHour}
-    nodesPerMinuteTrend={nodesPerMinuteTrend}
+    changesPerMinuteTrend={changesPerMinuteTrend}
+    commentQualityHour={commentQualityHour}
+    commentQualityLastHour={commentQualityLastHour}
+    commentQualityAllTimeHigh={commentQualityAllTimeHigh}
+    projectTagsHour={projectTagsHour}
+    projectTagsLastHour={projectTagsLastHour}
   />;
 }

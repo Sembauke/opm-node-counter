@@ -37,7 +37,7 @@ export default function ChangesetListWidget({
                 <span className={styles.changesetUser}>
                   {changeset.user ? (
                     <a
-                      href={`https://www.openstreetmap.org/user/${encodeURIComponent(changeset.user)}`}
+                      href={`https://www.openstreetmap.org/changeset/${changeset.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.mapperLink}

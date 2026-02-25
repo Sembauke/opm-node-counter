@@ -97,43 +97,14 @@
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 30px;
-  padding: 1.8rem clamp(1rem, 2.4vw, 2.3rem) 1.7rem;
+  padding: 1rem clamp(1rem, 2.4vw, 2.3rem);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(8px);
   animation: enterUp 0.55s ease both;
-}
-
-.heroMeta {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.85rem;
-}
-
-.heroIconWrap {
-  width: 2.8rem;
-  height: 2.8rem;
-  border-radius: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--icon-border);
-  background: var(--icon-surface);
-  box-shadow: var(--icon-shadow);
-}
-
-.heroIcon {
-  color: var(--accent-700);
-  font-size: 1.26rem;
-}
-
-.heroTag {
-  margin: 0;
-  font-size: 0.74rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--text-muted);
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .heroTitle {
@@ -143,22 +114,6 @@
   line-height: 1.07;
   letter-spacing: -0.03em;
   color: var(--text-strong);
-}
-
-.heroSubtitle {
-  margin: 0.8rem 0 0;
-  max-width: 64ch;
-  color: var(--text-muted-soft);
-  line-height: 1.5;
-  font-size: 0.98rem;
-}
-
-.heroActions {
-  margin-top: 1.25rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem;
 }
 
 .themeButton {
@@ -650,6 +605,91 @@
   box-shadow: var(--interactive-shadow);
 }
 
+/* ── ChangeQualityWidget ────────────────────────────────────── */
+
+.qualityGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.qualityCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.qualityValue {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.qualityBar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+  margin: 0.1rem 0 0.15rem;
+}
+
+.qualityBarFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-700);
+  transition: width 0.6s ease;
+}
+
+.qualityTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+}
+
+.qualityTag {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-700) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-700) 22%, transparent);
+  color: var(--accent-700);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.qualityDeltaUp {
+  color: #22c55e;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.qualityDeltaDown {
+  color: #f87171;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.qualityDeltaNeutral {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 560px) {
+  .qualityGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .lineChartWrap {
   --line-primary: var(--accent-700);
   --line-primary-area: color-mix(in srgb, var(--accent-600) 24%, transparent);
@@ -1099,15 +1139,6 @@
   .hero {
     border-radius: 24px;
     padding: 1.15rem 0.95rem;
-  }
-
-  .heroSubtitle {
-    font-size: 0.92rem;
-  }
-
-  .heroActions {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .primaryStatsGrid,

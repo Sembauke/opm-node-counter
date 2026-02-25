@@ -34,6 +34,8 @@ export default function CountriesGrid({ initialCountries }: { initialCountries: 
     new Map(initialCountries.map((c) => [c.countryCode, c.count]))
   );
   const [pulsingCodes, setPulsingCodes] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -73,26 +75,73 @@ export default function CountriesGrid({ initialCountries }: { initialCountries: 
     };
   }, []);
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "/" && document.activeElement !== inputRef.current) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+      if (e.key === "Escape" && document.activeElement === inputRef.current) {
+        inputRef.current?.blur();
+        setQuery("");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const normalized = query.trim().toLowerCase();
+  const filtered = normalized
+    ? countries.filter((c) => {
+        const name = getCountryName(c.countryCode).toLowerCase();
+        return name.includes(normalized) || c.countryCode.toLowerCase().includes(normalized);
+      })
+    : countries;
+
   return (
-    <ul className={styles.grid}>
-      {countries.map((country, index) => {
-        const isPulsing = pulsingCodes.has(country.countryCode);
-        return (
-          <li
-            key={country.countryCode}
-            className={`${styles.card}${isPulsing ? ` ${styles.cardPulse}` : ""}`}
-          >
-            <span className={styles.rank}>#{index + 1}</span>
-            <span className={styles.flag} aria-hidden>
-              {toFlagEmoji(country.countryCode)}
-            </span>
-            <span className={styles.name}>{getCountryName(country.countryCode)}</span>
-            <span className={`${styles.count}${isPulsing ? ` ${styles.countPulse}` : ""}`}>
-              <CountUp preserveValue end={country.count} separator="," />
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <div className={styles.searchWrap}>
+        <input
+          ref={inputRef}
+          type="search"
+          className={styles.searchInput}
+          placeholder="Search countries… (press / to focus)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search countries"
+        />
+        {query && (
+          <span className={styles.searchCount}>
+            {filtered.length} / {countries.length}
+          </span>
+        )}
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className={styles.empty}>No countries match &ldquo;{query}&rdquo;.</p>
+      ) : (
+        <ul className={styles.grid}>
+          {filtered.map((country) => {
+            const globalRank = countries.indexOf(country) + 1;
+            const isPulsing = pulsingCodes.has(country.countryCode);
+            return (
+              <li
+                key={country.countryCode}
+                className={`${styles.card}${isPulsing ? ` ${styles.cardPulse}` : ""}`}
+              >
+                <span className={styles.rank}>#{globalRank}</span>
+                <span className={styles.flag} aria-hidden>
+                  {toFlagEmoji(country.countryCode)}
+                </span>
+                <span className={styles.name}>{getCountryName(country.countryCode)}</span>
+                <span className={`${styles.count}${isPulsing ? ` ${styles.countPulse}` : ""}`}>
+                  <CountUp preserveValue end={country.count} separator="," />
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </>
   );
 }

@@ -85,6 +85,27 @@ const SCHEMA_SQL = `
     country_code TEXT PRIMARY KEY,
     total_changes INTEGER NOT NULL DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS comment_stats_hour (
+    bucket_hour INTEGER NOT NULL,
+    changeset_id INTEGER NOT NULL,
+    comment_length INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (bucket_hour, changeset_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS project_tag_changesets_hour (
+    bucket_hour INTEGER NOT NULL,
+    changeset_id INTEGER NOT NULL,
+    tag TEXT NOT NULL,
+    PRIMARY KEY (bucket_hour, changeset_id, tag)
+  );
+
+  CREATE TABLE IF NOT EXISTS project_tags_hour (
+    bucket_hour INTEGER NOT NULL,
+    tag TEXT NOT NULL,
+    count INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (bucket_hour, tag)
+  );
 `;
 
 function getDatabasePath() {
@@ -118,6 +139,36 @@ let lastPrunedBucket: number | null = null;
 // Ensure migrations are applied even when reusing a dev-time global database handle.
 db.exec(SCHEMA_SQL);
 
+// Migration: replace has_comment column with comment_length in comment_stats_hour.
+{
+  const cols = (db.pragma("table_info(comment_stats_hour)") as Array<{ name: string }>).map((c) => c.name);
+  if (cols.length > 0 && !cols.includes("comment_length")) {
+    db.exec(`
+      DROP TABLE comment_stats_hour;
+      CREATE TABLE comment_stats_hour (
+        bucket_hour INTEGER NOT NULL,
+        changeset_id INTEGER NOT NULL,
+        comment_length INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (bucket_hour, changeset_id)
+      );
+    `);
+  }
+}
+
+// Migration: reset quality tables so min-25 logic and 4-decimal precision start clean.
+{
+  const done = (db.prepare(`SELECT value FROM global_stats WHERE key = 'migration_quality_min25_reset'`).get() as { value: number } | undefined);
+  if (!done) {
+    db.exec(`
+      DELETE FROM comment_stats_hour;
+      DELETE FROM project_tag_changesets_hour;
+      DELETE FROM project_tags_hour;
+      DELETE FROM global_stats WHERE key = 'comment_quality_all_time_high';
+    `);
+    db.prepare(`INSERT OR REPLACE INTO global_stats (key, value) VALUES ('migration_quality_min25_reset', 1)`).run();
+  }
+}
+
 if (process.env.NODE_ENV !== "production") {
   globalForDb.__statsDb = db;
 }
@@ -140,6 +191,9 @@ export function pruneHourlyStats(bucketHour = getCurrentHourBucket()) {
   db.prepare("DELETE FROM average_changes_hour WHERE bucket_hour < ?").run(cutoff);
   db.prepare("DELETE FROM largest_changeset_hour WHERE bucket_hour < ?").run(cutoff);
   db.prepare("DELETE FROM new_nodes_hour WHERE bucket_hour < ?").run(cutoff);
+  db.prepare("DELETE FROM comment_stats_hour WHERE bucket_hour < ?").run(cutoff);
+  db.prepare("DELETE FROM project_tag_changesets_hour WHERE bucket_hour < ?").run(cutoff);
+  db.prepare("DELETE FROM project_tags_hour WHERE bucket_hour < ?").run(cutoff);
   lastPrunedBucket = bucketHour;
 }
 

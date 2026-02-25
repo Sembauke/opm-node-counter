@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { io } from "socket.io-client";
-import { FaGlobe } from "react-icons/fa";
 import { LuMoon, LuSun } from "react-icons/lu";
 import styles from "./page.module.css";
 import PodiumWidget from "../components/PodiumWidget";
@@ -10,6 +9,7 @@ import CountryChangesWidget from "../components/CountryChangesWidget";
 import StatsSection from "../components/StatsSection";
 import MoreStatsSection from "../components/MoreStatsSection";
 import ChangesetListWidget from "../components/ChangesetListWidget";
+import ChangeQualityWidget from "../components/ChangeQualityWidget";
 import TotalChangesetsLineGraph, {
   type ChangesetsTrendPoint,
 } from "../components/TotalChangesetsLineGraph";
@@ -18,7 +18,7 @@ import { useColorMode } from "@/components/ui/color-mode";
 
 interface HomeClientProps {
   changesetBatch: Changeset[];
-  totalNodes: number;
+  totalChanges: number;
   totalChangesets: number;
   totalSovereignCountries: number;
   uniqueMappersHour: number;
@@ -31,16 +31,21 @@ interface HomeClientProps {
   averageChangesLastHour: number;
   largestChangesetHour: number;
   largestChangesetLastHour: number;
-  nodesPerMinute: number;
-  nodesPerMinuteAllTimeHigh: number;
+  changesPerMinute: number;
+  changesPerMinuteAllTimeHigh: number;
   newNodesHour?: number;
   newNodesLastHour?: number;
-  nodesPerMinuteTrend: ChangesetsTrendPoint[];
+  changesPerMinuteTrend: ChangesetsTrendPoint[];
+  commentQualityHour: number;
+  commentQualityLastHour: number;
+  commentQualityAllTimeHigh: number;
+  projectTagsHour: { count: number; topTags: string[] };
+  projectTagsLastHour: { count: number; topTags: string[] };
 }
 
 interface LiveData {
   changesetBatch: Changeset[];
-  totalNodes: number;
+  totalChanges: number;
   totalChangesets: number;
   uniqueMappersHour: number;
   uniqueMappersLastHour: number;
@@ -52,11 +57,16 @@ interface LiveData {
   averageChangesLastHour: number;
   largestChangesetHour: number;
   largestChangesetLastHour: number;
-  nodesPerMinute: number;
-  nodesPerMinuteAllTimeHigh: number;
+  changesPerMinute: number;
+  changesPerMinuteAllTimeHigh: number;
   newNodesHour: number;
   newNodesLastHour: number;
   statsTimestampMs: number;
+  commentQualityHour: number;
+  commentQualityLastHour: number;
+  commentQualityAllTimeHigh: number;
+  projectTagsHour: { count: number; topTags: string[] };
+  projectTagsLastHour: { count: number; topTags: string[] };
 }
 
 interface FallingNode {
@@ -219,7 +229,7 @@ function toSafeNonNegativeNumber(value: unknown): number | null {
 
 export default function HomeClient({
   changesetBatch: initialChangesetBatch,
-  totalNodes: initialTotalNodes,
+  totalChanges: initialTotalChanges,
   totalChangesets: initialTotalChangesets,
   totalSovereignCountries,
   uniqueMappersHour: initialUniqueMappersHour,
@@ -232,11 +242,16 @@ export default function HomeClient({
   averageChangesLastHour: initialAverageChangesLastHour,
   largestChangesetHour: initialLargestChangesetHour,
   largestChangesetLastHour: initialLargestChangesetLastHour,
-  nodesPerMinute: initialNodesPerMinute,
-  nodesPerMinuteAllTimeHigh: initialNodesPerMinuteAllTimeHigh,
+  changesPerMinute: initialNodesPerMinute,
+  changesPerMinuteAllTimeHigh: initialNodesPerMinuteAllTimeHigh,
   newNodesHour: initialNewNodesHour = 0,
   newNodesLastHour: initialNewNodesLastHour = 0,
-  nodesPerMinuteTrend: initialNodesPerMinuteTrend,
+  changesPerMinuteTrend: initialNodesPerMinuteTrend,
+  commentQualityHour: initialCommentQualityHour,
+  commentQualityLastHour: initialCommentQualityLastHour,
+  commentQualityAllTimeHigh: initialCommentQualityAllTimeHigh,
+  projectTagsHour: initialProjectTagsHour,
+  projectTagsLastHour: initialProjectTagsLastHour,
 }: HomeClientProps) {
   const { colorMode, toggleColorMode } = useColorMode();
 
@@ -249,7 +264,7 @@ export default function HomeClient({
 
   const [liveData, setLiveData] = useState<LiveData>({
     changesetBatch: initialChangesetBatch,
-    totalNodes: initialTotalNodes,
+    totalChanges: initialTotalChanges,
     totalChangesets: initialTotalChangesets,
     uniqueMappersHour: initialUniqueMappersHour,
     uniqueMappersLastHour: initialUniqueMappersLastHour,
@@ -261,16 +276,21 @@ export default function HomeClient({
     averageChangesLastHour: initialAverageChangesLastHour,
     largestChangesetHour: initialLargestChangesetHour,
     largestChangesetLastHour: initialLargestChangesetLastHour,
-    nodesPerMinute: initialNodesPerMinute,
-    nodesPerMinuteAllTimeHigh: Math.max(
+    changesPerMinute: initialNodesPerMinute,
+    changesPerMinuteAllTimeHigh: Math.max(
       initialNodesPerMinuteAllTimeHigh,
       initialNodesPerMinute
     ),
     newNodesHour: initialNewNodesHour,
     newNodesLastHour: initialNewNodesLastHour,
     statsTimestampMs: Date.now(),
+    commentQualityHour: initialCommentQualityHour,
+    commentQualityLastHour: initialCommentQualityLastHour,
+    commentQualityAllTimeHigh: initialCommentQualityAllTimeHigh,
+    projectTagsHour: initialProjectTagsHour,
+    projectTagsLastHour: initialProjectTagsLastHour,
   });
-  const [nodesPerMinuteTrend, setNodesPerMinuteTrend] = useState<ChangesetsTrendPoint[]>(
+  const [changesPerMinuteTrend, setNodesPerMinuteTrend] = useState<ChangesetsTrendPoint[]>(
     (() => {
       const initialWindowed = trimTrendToWindow(initialNodesPerMinuteTrend);
       if (initialWindowed.length > 0) {
@@ -285,10 +305,10 @@ export default function HomeClient({
 
     socket.on("stats", (data: Partial<LiveData>) => {
       setLiveData((prev) => {
-        const incomingRate = toSafeNonNegativeNumber(data.nodesPerMinute);
-        const incomingHigh = toSafeNonNegativeNumber(data.nodesPerMinuteAllTimeHigh);
+        const incomingRate = toSafeNonNegativeNumber(data.changesPerMinute);
+        const incomingHigh = toSafeNonNegativeNumber(data.changesPerMinuteAllTimeHigh);
         const resolvedAllTimeHigh = Math.max(
-          prev.nodesPerMinuteAllTimeHigh,
+          prev.changesPerMinuteAllTimeHigh,
           incomingHigh ?? 0,
           incomingRate ?? 0
         );
@@ -297,7 +317,7 @@ export default function HomeClient({
           return {
             ...prev,
             ...data,
-            nodesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
+            changesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
           };
         }
 
@@ -309,7 +329,7 @@ export default function HomeClient({
           return {
             ...prev,
             ...data,
-            nodesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
+            changesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
             changesetBatch: prev.changesetBatch,
           };
         }
@@ -317,7 +337,7 @@ export default function HomeClient({
         return {
           ...prev,
           ...data,
-          nodesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
+          changesPerMinuteAllTimeHigh: resolvedAllTimeHigh,
           changesetBatch: mergedBatch,
         };
       });
@@ -451,7 +471,7 @@ export default function HomeClient({
       typeof liveData.statsTimestampMs === "number" && Number.isFinite(liveData.statsTimestampMs)
         ? Math.floor(liveData.statsTimestampMs)
         : Date.now();
-    const pointValue = Math.max(Math.round(liveData.nodesPerMinute), 0);
+    const pointValue = Math.max(Math.round(liveData.changesPerMinute), 0);
 
     setNodesPerMinuteTrend((prev) => {
       const lastPoint = prev[prev.length - 1];
@@ -467,7 +487,7 @@ export default function HomeClient({
       const windowed = trimTrendToWindow(next, pointTimestamp);
       return windowed.slice(-TREND_CLIENT_LIMIT);
     });
-  }, [liveData.nodesPerMinute, liveData.statsTimestampMs]);
+  }, [liveData.changesPerMinute, liveData.statsTimestampMs]);
 
   useEffect(() => {
     return () => {
@@ -517,59 +537,40 @@ export default function HomeClient({
 
       <main ref={pageContainerRef} className={styles.pageContainer}>
         <header className={styles.hero}>
-          <div className={styles.heroMeta}>
-            <span className={styles.heroIconWrap}>
-              <FaGlobe className={styles.heroIcon} />
-            </span>
-            <p className={styles.heroTag}>OpenStreetMap Live Analytics</p>
-          </div>
-
-          <h1 className={styles.heroTitle}>Node Counter Dashboard</h1>
-          <p className={styles.heroSubtitle}>
-            Follow global mapping activity in real time with hourly trends and contributor highlights.
-          </p>
-
-          <div className={styles.heroActions}>
-            <button
-              type="button"
-              className={styles.themeButton}
-              onClick={toggleColorMode}
-              aria-label={colorMode === "dark" ? "Switch to day theme" : "Switch to night theme"}
-            >
-              {colorMode === "dark" ? (
-                <>
-                  <LuSun className={styles.themeIcon} />
-                  Day theme
-                </>
-              ) : (
-                <>
-                  <LuMoon className={styles.themeIcon} />
-                  Night theme
-                </>
-              )}
-            </button>
-          </div>
+          <h1 className={styles.heroTitle}>OSM Pulse</h1>
+          <button
+            type="button"
+            className={styles.themeButton}
+            onClick={toggleColorMode}
+            aria-label={colorMode === "dark" ? "Switch to day theme" : "Switch to night theme"}
+          >
+            {colorMode === "dark" ? (
+              <LuSun className={styles.themeIcon} />
+            ) : (
+              <LuMoon className={styles.themeIcon} />
+            )}
+          </button>
         </header>
 
         <section className={styles.sectionWrap}>
           <p className={styles.sectionLabel}>Global totals</p>
           <StatsSection
-            totalNodes={liveData.totalNodes}
+            totalChanges={liveData.totalChanges}
             totalChangesets={liveData.totalChangesets}
-            nodesPerMinute={liveData.nodesPerMinute}
-            nodesPerMinuteAllTimeHigh={liveData.nodesPerMinuteAllTimeHigh}
+            changesPerMinute={liveData.changesPerMinute}
+            changesPerMinuteAllTimeHigh={liveData.changesPerMinuteAllTimeHigh}
           />
         </section>
 
         <section className={styles.sectionWrap}>
           <p className={styles.sectionLabel}>Trend chart</p>
           <TotalChangesetsLineGraph
-            points={nodesPerMinuteTrend}
-            title="Nodes per minute trend"
+            points={changesPerMinuteTrend}
+            title="Changes per minute trend"
             subtitle="Live throughput line chart"
-            ariaLabel="Nodes per minute line chart"
-            primaryLabel="Nodes/min"
-            primaryValueUnit="nodes/min"
+            ariaLabel="Changes per minute line chart"
+            primaryLabel="Changes/min"
+            primaryValueUnit="changes/min"
           />
         </section>
 
@@ -595,6 +596,17 @@ export default function HomeClient({
           <CountryChangesWidget
             topCountriesHour={liveData.topCountriesHour}
             topCountriesLastHour={liveData.topCountriesLastHour}
+          />
+        </section>
+
+        <section className={styles.sectionWrap}>
+          <p className={styles.sectionLabel}>Changeset quality</p>
+          <ChangeQualityWidget
+            commentQualityHour={liveData.commentQualityHour}
+            commentQualityLastHour={liveData.commentQualityLastHour}
+            commentQualityAllTimeHigh={liveData.commentQualityAllTimeHigh}
+            projectTagsHour={liveData.projectTagsHour}
+            projectTagsLastHour={liveData.projectTagsLastHour}
           />
         </section>
 

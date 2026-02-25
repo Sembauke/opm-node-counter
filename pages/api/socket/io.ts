@@ -14,13 +14,15 @@ import {
 import { sendOrGetNodesPerMinuteTrend } from "@/actions/create-nodes-per-minute-trend";
 import { sendOrGetTotalChangesetsTrend } from "@/actions/create-total-changesets-trend";
 import { getAllCountryChanges } from "@/actions/get-all-country-changes";
+import { sendOrGetCommentQualityHour, sendOrGetCommentQualityAllTimeHigh } from "@/actions/create-comment-stats-hour";
+import { sendOrGetProjectTagsHour } from "@/actions/create-project-tags-hour";
 import { enrichChangesetsWithCountry } from "@/lib/changeset-country";
 import { convertXML } from "simple-xml-to-json";
 import type { Changeset } from "@/types/changeset";
 
 const STATS_INTERVAL_MS = 6000;
 const OSM_CHANGESETS_URL = "https://www.openstreetmap.org/api/0.6/changesets.json?limit=25&closed=true";
-const STATS_LOOP_VERSION = "country-flags-v18";
+const STATS_LOOP_VERSION = "comment-quality-v19";
 const NODES_PER_MINUTE_SMOOTHING_ALPHA = 0.34;
 const NODE_RATE_WINDOW_MS = 90_000;
 const NODE_RATE_MIN_ELAPSED_MS = 18_000;
@@ -293,12 +295,9 @@ export default async function handler(req: any, res: any) {
           }
         }
 
-        const estimatedTotalNodes = previousTotalNodes + Math.max(changesInThisTick, 0);
-        const anchoredTotalNodes =
-          latestTotalNodes !== null
-            ? Math.max(latestTotalNodes, estimatedTotalNodes)
-            : estimatedTotalNodes;
-        const totalNodes = Math.max(anchoredTotalNodes, previousTotalNodes);
+        const totalNodes = latestTotalNodes !== null
+          ? Math.max(latestTotalNodes, previousTotalNodes)
+          : previousTotalNodes;
         const newHourlyTotalNodes = Math.max(totalNodes - previousTotalNodes, 0);
 
         rateSamples.push({ timestampMs: nowMs, changes: changesInThisTick });
@@ -359,6 +358,9 @@ export default async function handler(req: any, res: any) {
           await sendOrGetTopCountriesHour(cs.countryCode ?? null, cs.changes_count, cs.id);
           await sendOrGetAverageChangesHour(cs.user, cs.changes_count);
           await sendOrGetLargestChangesetHour(cs.user, cs.changes_count);
+          const comment = cs.tags?.comment ?? "";
+          await sendOrGetCommentQualityHour(cs.id, comment.trim().length);
+          await sendOrGetProjectTagsHour(cs.id, comment);
         }
 
         const topMappersHour = await sendOrGetTopMappersHour();
@@ -374,10 +376,15 @@ export default async function handler(req: any, res: any) {
         const newNodesHour = await sendOrGetNewNodesHour();
         const newNodesLastHour = await sendOrGetNewNodesHour(null, -1);
         const allCountryChanges = await getAllCountryChanges();
+        const commentQualityHour = await sendOrGetCommentQualityHour();
+        const commentQualityLastHour = await sendOrGetCommentQualityHour(null, null, -1);
+        const commentQualityAllTimeHigh = await sendOrGetCommentQualityAllTimeHigh();
+        const projectTagsHour = await sendOrGetProjectTagsHour();
+        const projectTagsLastHour = await sendOrGetProjectTagsHour(null, null, -1);
 
         io.emit("stats", {
           changesetBatch: enrichChangesetsWithCountry(changesetBatch),
-          totalNodes: await sendOrGetNodeTotal(),
+          totalChanges: await sendOrGetNodeTotal(),
           totalChangesets,
           uniqueMappersHour,
           uniqueMappersLastHour,
@@ -389,14 +396,19 @@ export default async function handler(req: any, res: any) {
           averageChangesLastHour,
           largestChangesetHour,
           largestChangesetLastHour,
-          nodesPerMinute: persistedNodesPerMinute,
-          nodesPerMinuteAllTimeHigh,
+          changesPerMinute: persistedNodesPerMinute,
+          changesPerMinuteAllTimeHigh: nodesPerMinuteAllTimeHigh,
           topMappersBatch: getTopMappers(changesetBatch),
           averageChangesBatch: getAverageChanges(changesetBatch),
           largestChangesetBatch: getLargestChangeset(changesetBatch),
           newNodesHour,
           newNodesLastHour,
           allCountryChanges,
+          commentQualityHour,
+          commentQualityLastHour,
+          commentQualityAllTimeHigh,
+          projectTagsHour,
+          projectTagsLastHour,
           statsTimestampMs: nowMs,
         });
       } catch (error) {

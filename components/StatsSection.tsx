@@ -7,17 +7,17 @@ import { Tooltip } from "./ui/tooltip";
 import styles from "../app/page.module.css";
 
 interface StatsSectionProps {
-  totalNodes: number;
+  totalChanges: number;
   totalChangesets: number;
-  nodesPerMinute: number;
-  nodesPerMinuteAllTimeHigh: number;
+  changesPerMinute: number;
+  changesPerMinuteAllTimeHigh: number;
 }
 
 export default function StatsSection({
-  totalNodes,
+  totalChanges,
   totalChangesets,
-  nodesPerMinute,
-  nodesPerMinuteAllTimeHigh,
+  changesPerMinute,
+  changesPerMinuteAllTimeHigh,
 }: StatsSectionProps) {
   const [ratePulse, setRatePulse] = useState(false);
 
@@ -25,21 +25,21 @@ export default function StatsSection({
     setRatePulse(true);
     const timer = window.setTimeout(() => setRatePulse(false), 820);
     return () => window.clearTimeout(timer);
-  }, [nodesPerMinute]);
+  }, [changesPerMinute]);
 
   return (
     <div className={styles.primaryStatsGrid}>
       <article className={styles.statCard}>
         <div className={styles.statLabelRow}>
-          <p className={styles.statLabel}>Total Nodes</p>
-          <Tooltip content="Cumulative nodes ever created in OpenStreetMap (not current alive nodes)" showArrow>
+          <p className={styles.statLabel}>Total Changes</p>
+          <Tooltip content="Cumulative changes ever recorded in OpenStreetMap" showArrow>
             <button className={styles.statInfoBtn} aria-label="More information">
               <FiInfo />
             </button>
           </Tooltip>
         </div>
         <p className={styles.statValue}>
-          <CountUp preserveValue end={totalNodes} separator="," />
+          <CountUp preserveValue end={totalChanges} separator="," />
         </p>
       </article>
 
@@ -63,7 +63,7 @@ export default function StatsSection({
         }`}
       >
         <div className={styles.statLabelRow}>
-          <p className={styles.statLabel}>Nodes per Minute (est.)</p>
+          <p className={styles.statLabel}>Changes per Minute (est.)</p>
           <Tooltip content="Rolling estimate based on newly observed closed changesets" showArrow>
             <button className={styles.statInfoBtn} aria-label="More information">
               <FiInfo />
@@ -75,10 +75,10 @@ export default function StatsSection({
             ratePulse ? ` ${styles.nodesPerMinuteValuePulse}` : ""
           }`}
         >
-          <CountUp preserveValue end={nodesPerMinute} separator="," />
+          <CountUp preserveValue end={changesPerMinute} separator="," />
         </p>
         <p className={styles.statCompare}>
-          All-time high: {nodesPerMinuteAllTimeHigh.toLocaleString()} nodes/min
+          All-time high: {changesPerMinuteAllTimeHigh.toLocaleString()} changes/min
         </p>
       </article>
     </div>
