@@ -1,13 +1,31 @@
+import Link from "next/link";
 import styles from "../app/page.module.css";
 
 interface Mapper {
   user: string;
   count: number;
+  countryCode: string | null;
 }
 
 interface PodiumWidgetProps {
   topMappersHour: Mapper[];
   topMappersLastHour: Mapper[];
+  leaderAllTimeHigh: number;
+}
+
+function toFlagEmoji(countryCode: string) {
+  return countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+    .join("");
+}
+
+function getMapperFlag(countryCode: string | null) {
+  if (!countryCode || !/^[A-Z]{2}$/.test(countryCode)) {
+    return "🏳️";
+  }
+  return toFlagEmoji(countryCode);
 }
 
 function MapperLink({ user }: { user: string }) {
@@ -26,6 +44,7 @@ function MapperLink({ user }: { user: string }) {
 export default function PodiumWidget({
   topMappersHour,
   topMappersLastHour,
+  leaderAllTimeHigh,
 }: PodiumWidgetProps) {
   const mappers = topMappersHour.slice(0, 18);
   const currentLeader = topMappersHour[0];
@@ -41,6 +60,7 @@ export default function PodiumWidget({
         Current leader:{" "}
         {currentLeader ? (
           <>
+            {getMapperFlag(currentLeader.countryCode)}{" "}
             <MapperLink user={currentLeader.user} /> ({currentLeader.count.toLocaleString()})
           </>
         ) : (
@@ -50,11 +70,14 @@ export default function PodiumWidget({
         Last hour leader:{" "}
         {lastLeader ? (
           <>
+            {getMapperFlag(lastLeader.countryCode)}{" "}
             <MapperLink user={lastLeader.user} /> ({lastLeader.count.toLocaleString()})
           </>
         ) : (
           "No data"
         )}
+        {" • "}
+        All-time high leader count: {leaderAllTimeHigh.toLocaleString()}
       </p>
 
       <div className={styles.mapperTable}>
@@ -71,6 +94,7 @@ export default function PodiumWidget({
               <div key={`${mapper.user}-${rank}`} className={styles.mapperRow}>
                 <span className={styles.mapperRank}>{rank}</span>
                 <span className={styles.mapperName}>
+                  <span aria-hidden>{getMapperFlag(mapper.countryCode)} </span>
                   <MapperLink user={mapper.user} />
                 </span>
                 <span className={styles.mapperScore}>{mapper.count}</span>
@@ -78,6 +102,12 @@ export default function PodiumWidget({
             );
           })
         )}
+      </div>
+
+      <div className={styles.countryAllLink}>
+        <Link href="/users" className={styles.countryAllButton}>
+          View all users
+        </Link>
       </div>
     </section>
   );

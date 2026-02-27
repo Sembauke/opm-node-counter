@@ -6,28 +6,32 @@ import styles from "../app/page.module.css";
 interface MoreStatsSectionProps {
   averageChangesHour: number;
   averageChangesLastHour: number;
-  largestChangesetHour: number;
-  largestChangesetLastHour: number;
+  averageChangesAllTimeHigh: number;
   uniqueMappersHour: number;
   uniqueMappersLastHour: number;
+  uniqueMappersAllTimeHigh: number;
   newNodesHour: number;
   newNodesLastHour: number;
+  newNodesAllTimeHigh: number;
   activeCountriesHour: number;
   activeCountriesLastHour: number;
+  activeCountriesAllTimeHigh: number;
   totalSovereignCountries: number;
 }
 
 export default function MoreStatsSection({
   averageChangesHour,
   averageChangesLastHour,
-  largestChangesetHour,
-  largestChangesetLastHour,
+  averageChangesAllTimeHigh,
   uniqueMappersHour,
   uniqueMappersLastHour,
+  uniqueMappersAllTimeHigh,
   newNodesHour,
   newNodesLastHour,
+  newNodesAllTimeHigh,
   activeCountriesHour,
   activeCountriesLastHour,
+  activeCountriesAllTimeHigh,
   totalSovereignCountries,
 }: MoreStatsSectionProps) {
   return (
@@ -44,25 +48,13 @@ export default function MoreStatsSection({
         <p className={styles.statValue}>
           <CountUp preserveValue end={averageChangesHour} separator="," />
         </p>
-        <p className={styles.statCompare}>
-          Last hour: {averageChangesLastHour.toLocaleString()}
-        </p>
-      </article>
-
-      <article className={styles.statCard}>
-        <div className={styles.statLabelRow}>
-          <p className={styles.statLabel}>Largest Changeset</p>
-          <Tooltip content="Highest number of changes by one mapper this hour" showArrow>
-            <button className={styles.statInfoBtn} aria-label="More information">
-              <FiInfo />
-            </button>
-          </Tooltip>
-        </div>
-        <p className={styles.statValue}>
-          <CountUp preserveValue end={largestChangesetHour} separator="," />
-        </p>
-        <p className={styles.statCompare}>
-          Last hour: {largestChangesetLastHour.toLocaleString()}
+        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
+          <span className={styles.statCompareLine}>
+            Last hour: {averageChangesLastHour.toLocaleString()}
+          </span>
+          <span className={styles.statCompareLine}>
+            All-time high: {averageChangesAllTimeHigh.toLocaleString()}
+          </span>
         </p>
       </article>
 
@@ -78,8 +70,13 @@ export default function MoreStatsSection({
         <p className={styles.statValue}>
           <CountUp preserveValue end={uniqueMappersHour} separator="," />
         </p>
-        <p className={styles.statCompare}>
-          Last hour: {uniqueMappersLastHour.toLocaleString()}
+        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
+          <span className={styles.statCompareLine}>
+            Last hour: {uniqueMappersLastHour.toLocaleString()}
+          </span>
+          <span className={styles.statCompareLine}>
+            All-time high: {uniqueMappersAllTimeHigh.toLocaleString()}
+          </span>
         </p>
       </article>
 
@@ -95,8 +92,13 @@ export default function MoreStatsSection({
         <p className={styles.statValue}>
           <CountUp preserveValue end={newNodesHour} separator="," />
         </p>
-        <p className={styles.statCompare}>
-          Last hour: {newNodesLastHour.toLocaleString()}
+        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
+          <span className={styles.statCompareLine}>
+            Last hour: {newNodesLastHour.toLocaleString()}
+          </span>
+          <span className={styles.statCompareLine}>
+            All-time high: {newNodesAllTimeHigh.toLocaleString()}
+          </span>
         </p>
       </article>
 
@@ -113,9 +115,15 @@ export default function MoreStatsSection({
           <CountUp preserveValue end={activeCountriesHour} separator="," /> /{" "}
           {totalSovereignCountries.toLocaleString()}
         </p>
-        <p className={styles.statCompare}>
-          Last hour: {activeCountriesLastHour.toLocaleString()} /{" "}
-          {totalSovereignCountries.toLocaleString()}
+        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
+          <span className={styles.statCompareLine}>
+            Last hour: {activeCountriesLastHour.toLocaleString()} /{" "}
+            {totalSovereignCountries.toLocaleString()}
+          </span>
+          <span className={styles.statCompareLine}>
+            All-time high: {activeCountriesAllTimeHigh.toLocaleString()} /{" "}
+            {totalSovereignCountries.toLocaleString()}
+          </span>
         </p>
       </article>
     </div>

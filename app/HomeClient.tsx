@@ -23,24 +23,26 @@ interface HomeClientProps {
   totalSovereignCountries: number;
   uniqueMappersHour: number;
   uniqueMappersLastHour: number;
-  topMappersHour: { user: string; count: number }[];
-  topMappersLastHour: { user: string; count: number }[];
+  uniqueMappersAllTimeHigh: number;
+  topMappersHour: { user: string; count: number; countryCode: string | null }[];
+  topMappersLastHour: { user: string; count: number; countryCode: string | null }[];
+  topMappersLeaderAllTimeHigh: number;
   topCountriesHour: { countryCode: string; count: number }[];
   topCountriesLastHour: { countryCode: string; count: number }[];
+  topCountriesLeaderAllTimeHigh: number;
   averageChangesHour: number;
   averageChangesLastHour: number;
-  largestChangesetHour: number;
-  largestChangesetLastHour: number;
+  averageChangesAllTimeHigh: number;
   changesPerMinute: number;
   changesPerMinuteAllTimeHigh: number;
   newNodesHour?: number;
   newNodesLastHour?: number;
+  newNodesAllTimeHigh?: number;
+  activeCountriesAllTimeHigh: number;
   changesPerMinuteTrend: ChangesetsTrendPoint[];
-  commentQualityHour: number;
-  commentQualityLastHour: number;
-  commentQualityAllTimeHigh: number;
   projectTagsHour: { count: number; topTags: string[] };
   projectTagsLastHour: { count: number; topTags: string[] };
+  projectTagsAllTimeHigh: number;
 }
 
 interface LiveData {
@@ -49,24 +51,26 @@ interface LiveData {
   totalChangesets: number;
   uniqueMappersHour: number;
   uniqueMappersLastHour: number;
-  topMappersHour: { user: string; count: number }[];
-  topMappersLastHour: { user: string; count: number }[];
+  uniqueMappersAllTimeHigh: number;
+  topMappersHour: { user: string; count: number; countryCode: string | null }[];
+  topMappersLastHour: { user: string; count: number; countryCode: string | null }[];
+  topMappersLeaderAllTimeHigh: number;
   topCountriesHour: { countryCode: string; count: number }[];
   topCountriesLastHour: { countryCode: string; count: number }[];
+  topCountriesLeaderAllTimeHigh: number;
   averageChangesHour: number;
   averageChangesLastHour: number;
-  largestChangesetHour: number;
-  largestChangesetLastHour: number;
+  averageChangesAllTimeHigh: number;
   changesPerMinute: number;
   changesPerMinuteAllTimeHigh: number;
   newNodesHour: number;
   newNodesLastHour: number;
+  newNodesAllTimeHigh: number;
+  activeCountriesAllTimeHigh: number;
   statsTimestampMs: number;
-  commentQualityHour: number;
-  commentQualityLastHour: number;
-  commentQualityAllTimeHigh: number;
   projectTagsHour: { count: number; topTags: string[] };
   projectTagsLastHour: { count: number; topTags: string[] };
+  projectTagsAllTimeHigh: number;
 }
 
 interface FallingNode {
@@ -234,24 +238,26 @@ export default function HomeClient({
   totalSovereignCountries,
   uniqueMappersHour: initialUniqueMappersHour,
   uniqueMappersLastHour: initialUniqueMappersLastHour,
+  uniqueMappersAllTimeHigh: initialUniqueMappersAllTimeHigh,
   topMappersHour: initialTopMappersHour,
   topMappersLastHour: initialTopMappersLastHour,
+  topMappersLeaderAllTimeHigh: initialTopMappersLeaderAllTimeHigh,
   topCountriesHour: initialTopCountriesHour,
   topCountriesLastHour: initialTopCountriesLastHour,
+  topCountriesLeaderAllTimeHigh: initialTopCountriesLeaderAllTimeHigh,
   averageChangesHour: initialAverageChangesHour,
   averageChangesLastHour: initialAverageChangesLastHour,
-  largestChangesetHour: initialLargestChangesetHour,
-  largestChangesetLastHour: initialLargestChangesetLastHour,
+  averageChangesAllTimeHigh: initialAverageChangesAllTimeHigh,
   changesPerMinute: initialNodesPerMinute,
   changesPerMinuteAllTimeHigh: initialNodesPerMinuteAllTimeHigh,
   newNodesHour: initialNewNodesHour = 0,
   newNodesLastHour: initialNewNodesLastHour = 0,
+  newNodesAllTimeHigh: initialNewNodesAllTimeHigh = 0,
+  activeCountriesAllTimeHigh: initialActiveCountriesAllTimeHigh,
   changesPerMinuteTrend: initialNodesPerMinuteTrend,
-  commentQualityHour: initialCommentQualityHour,
-  commentQualityLastHour: initialCommentQualityLastHour,
-  commentQualityAllTimeHigh: initialCommentQualityAllTimeHigh,
   projectTagsHour: initialProjectTagsHour,
   projectTagsLastHour: initialProjectTagsLastHour,
+  projectTagsAllTimeHigh: initialProjectTagsAllTimeHigh,
 }: HomeClientProps) {
   const { colorMode, toggleColorMode } = useColorMode();
 
@@ -268,14 +274,16 @@ export default function HomeClient({
     totalChangesets: initialTotalChangesets,
     uniqueMappersHour: initialUniqueMappersHour,
     uniqueMappersLastHour: initialUniqueMappersLastHour,
+    uniqueMappersAllTimeHigh: initialUniqueMappersAllTimeHigh,
     topMappersHour: initialTopMappersHour,
     topMappersLastHour: initialTopMappersLastHour,
+    topMappersLeaderAllTimeHigh: initialTopMappersLeaderAllTimeHigh,
     topCountriesHour: initialTopCountriesHour,
     topCountriesLastHour: initialTopCountriesLastHour,
+    topCountriesLeaderAllTimeHigh: initialTopCountriesLeaderAllTimeHigh,
     averageChangesHour: initialAverageChangesHour,
     averageChangesLastHour: initialAverageChangesLastHour,
-    largestChangesetHour: initialLargestChangesetHour,
-    largestChangesetLastHour: initialLargestChangesetLastHour,
+    averageChangesAllTimeHigh: initialAverageChangesAllTimeHigh,
     changesPerMinute: initialNodesPerMinute,
     changesPerMinuteAllTimeHigh: Math.max(
       initialNodesPerMinuteAllTimeHigh,
@@ -283,12 +291,12 @@ export default function HomeClient({
     ),
     newNodesHour: initialNewNodesHour,
     newNodesLastHour: initialNewNodesLastHour,
+    newNodesAllTimeHigh: initialNewNodesAllTimeHigh,
+    activeCountriesAllTimeHigh: initialActiveCountriesAllTimeHigh,
     statsTimestampMs: Date.now(),
-    commentQualityHour: initialCommentQualityHour,
-    commentQualityLastHour: initialCommentQualityLastHour,
-    commentQualityAllTimeHigh: initialCommentQualityAllTimeHigh,
     projectTagsHour: initialProjectTagsHour,
     projectTagsLastHour: initialProjectTagsLastHour,
+    projectTagsAllTimeHigh: initialProjectTagsAllTimeHigh,
   });
   const [changesPerMinuteTrend, setNodesPerMinuteTrend] = useState<ChangesetsTrendPoint[]>(
     (() => {
@@ -579,14 +587,16 @@ export default function HomeClient({
           <MoreStatsSection
             averageChangesHour={liveData.averageChangesHour}
             averageChangesLastHour={liveData.averageChangesLastHour}
-            largestChangesetHour={liveData.largestChangesetHour}
-            largestChangesetLastHour={liveData.largestChangesetLastHour}
+            averageChangesAllTimeHigh={liveData.averageChangesAllTimeHigh}
             uniqueMappersHour={liveData.uniqueMappersHour}
             uniqueMappersLastHour={liveData.uniqueMappersLastHour}
+            uniqueMappersAllTimeHigh={liveData.uniqueMappersAllTimeHigh}
             newNodesHour={liveData.newNodesHour}
             newNodesLastHour={liveData.newNodesLastHour}
+            newNodesAllTimeHigh={liveData.newNodesAllTimeHigh}
             activeCountriesHour={liveData.topCountriesHour.length}
             activeCountriesLastHour={liveData.topCountriesLastHour.length}
+            activeCountriesAllTimeHigh={liveData.activeCountriesAllTimeHigh}
             totalSovereignCountries={totalSovereignCountries}
           />
         </section>
@@ -596,17 +606,16 @@ export default function HomeClient({
           <CountryChangesWidget
             topCountriesHour={liveData.topCountriesHour}
             topCountriesLastHour={liveData.topCountriesLastHour}
+            leaderAllTimeHigh={liveData.topCountriesLeaderAllTimeHigh}
           />
         </section>
 
         <section className={styles.sectionWrap}>
-          <p className={styles.sectionLabel}>Changeset quality</p>
+          <p className={styles.sectionLabel}>Projects</p>
           <ChangeQualityWidget
-            commentQualityHour={liveData.commentQualityHour}
-            commentQualityLastHour={liveData.commentQualityLastHour}
-            commentQualityAllTimeHigh={liveData.commentQualityAllTimeHigh}
             projectTagsHour={liveData.projectTagsHour}
             projectTagsLastHour={liveData.projectTagsLastHour}
+            projectTagsAllTimeHigh={liveData.projectTagsAllTimeHigh}
           />
         </section>
 
@@ -614,6 +623,7 @@ export default function HomeClient({
           <PodiumWidget
             topMappersHour={liveData.topMappersHour}
             topMappersLastHour={liveData.topMappersLastHour}
+            leaderAllTimeHigh={liveData.topMappersLeaderAllTimeHigh}
           />
           <ChangesetListWidget
             changesetBatch={liveData.changesetBatch}

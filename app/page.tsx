@@ -4,15 +4,17 @@ import { sendOrGetUniqueMappersHour } from "@/actions/create-unique-mappers-hour
 import { sendOrGetTopMappersHour } from "@/actions/create-top-mappers-hour";
 import { sendOrGetTopCountriesHour } from "@/actions/create-top-countries-hour";
 import { sendOrGetAverageChangesHour } from "@/actions/create-average-changes-hour";
-import { sendOrGetLargestChangesetHour } from "@/actions/create-largest-changeset-hour";
 import { sendOrGetNewNodesHour } from "@/actions/create-new-nodes-hour";
 import {
   sendOrGetNodesPerMinute,
   sendOrGetNodesPerMinuteAllTimeHigh,
 } from "@/actions/create-nodes-per-minute";
 import { sendOrGetNodesPerMinuteTrend } from "@/actions/create-nodes-per-minute-trend";
-import { sendOrGetCommentQualityHour, sendOrGetCommentQualityAllTimeHigh } from "@/actions/create-comment-stats-hour";
 import { sendOrGetProjectTagsHour } from "@/actions/create-project-tags-hour";
+import {
+  HOURLY_ALL_TIME_HIGH_KEYS,
+  sendOrGetHourlyAllTimeHigh,
+} from "@/actions/create-hourly-all-time-high";
 import { enrichChangesetsWithCountry } from "@/lib/changeset-country";
 import { TOTAL_SOVEREIGN_COUNTRIES } from "@/lib/sovereign-countries";
 import type { Changeset } from "@/types/changeset";
@@ -41,18 +43,41 @@ export default async function Home() {
   const topCountriesLastHour = await sendOrGetTopCountriesHour(null, 1, null, -1);
   const averageChangesHour = await sendOrGetAverageChangesHour();
   const averageChangesLastHour = await sendOrGetAverageChangesHour(null, null, -1);
-  const largestChangesetHour = await sendOrGetLargestChangesetHour();
-  const largestChangesetLastHour = await sendOrGetLargestChangesetHour(null, null, -1);
   const newNodesHour = await sendOrGetNewNodesHour();
   const newNodesLastHour = await sendOrGetNewNodesHour(null, -1);
   const changesPerMinute = await sendOrGetNodesPerMinute();
   const changesPerMinuteAllTimeHigh = await sendOrGetNodesPerMinuteAllTimeHigh();
   const changesPerMinuteTrend: ChangesetsTrendPoint[] = await sendOrGetNodesPerMinuteTrend();
-  const commentQualityHour = await sendOrGetCommentQualityHour();
-  const commentQualityLastHour = await sendOrGetCommentQualityHour(null, null, -1);
-  const commentQualityAllTimeHigh = await sendOrGetCommentQualityAllTimeHigh();
   const projectTagsHour = await sendOrGetProjectTagsHour();
   const projectTagsLastHour = await sendOrGetProjectTagsHour(null, null, -1);
+  const uniqueMappersAllTimeHigh = await sendOrGetHourlyAllTimeHigh(
+    HOURLY_ALL_TIME_HIGH_KEYS.uniqueMappersHour,
+    uniqueMappersHour
+  );
+  const averageChangesAllTimeHigh = await sendOrGetHourlyAllTimeHigh(
+    HOURLY_ALL_TIME_HIGH_KEYS.averageChangesHour,
+    averageChangesHour
+  );
+  const newNodesAllTimeHigh = await sendOrGetHourlyAllTimeHigh(
+    HOURLY_ALL_TIME_HIGH_KEYS.newNodesHour,
+    newNodesHour
+  );
+  const activeCountriesAllTimeHigh = await sendOrGetHourlyAllTimeHigh(
+    HOURLY_ALL_TIME_HIGH_KEYS.activeCountriesHour,
+    topCountriesHour.length
+  );
+  const projectTagsAllTimeHigh = await sendOrGetHourlyAllTimeHigh(
+    HOURLY_ALL_TIME_HIGH_KEYS.projectTagsHour,
+    projectTagsHour.count
+  );
+  const topMappersLeaderAllTimeHigh = await sendOrGetHourlyAllTimeHigh(
+    HOURLY_ALL_TIME_HIGH_KEYS.topMapperLeaderHour,
+    topMappersHour[0]?.count ?? 0
+  );
+  const topCountriesLeaderAllTimeHigh = await sendOrGetHourlyAllTimeHigh(
+    HOURLY_ALL_TIME_HIGH_KEYS.topCountryLeaderHour,
+    topCountriesHour[0]?.count ?? 0
+  );
 
   return <HomeClient
     changesetBatch={changesetBatch}
@@ -63,21 +88,23 @@ export default async function Home() {
     uniqueMappersLastHour={uniqueMappersLastHour}
     topMappersHour={topMappersHour}
     topMappersLastHour={topMappersLastHour}
+    topMappersLeaderAllTimeHigh={topMappersLeaderAllTimeHigh}
     topCountriesHour={topCountriesHour}
     topCountriesLastHour={topCountriesLastHour}
+    topCountriesLeaderAllTimeHigh={topCountriesLeaderAllTimeHigh}
     averageChangesHour={averageChangesHour}
     averageChangesLastHour={averageChangesLastHour}
-    largestChangesetHour={largestChangesetHour}
-    largestChangesetLastHour={largestChangesetLastHour}
+    averageChangesAllTimeHigh={averageChangesAllTimeHigh}
     changesPerMinute={changesPerMinute}
     changesPerMinuteAllTimeHigh={changesPerMinuteAllTimeHigh}
     newNodesHour={newNodesHour}
     newNodesLastHour={newNodesLastHour}
+    newNodesAllTimeHigh={newNodesAllTimeHigh}
     changesPerMinuteTrend={changesPerMinuteTrend}
-    commentQualityHour={commentQualityHour}
-    commentQualityLastHour={commentQualityLastHour}
-    commentQualityAllTimeHigh={commentQualityAllTimeHigh}
+    uniqueMappersAllTimeHigh={uniqueMappersAllTimeHigh}
+    activeCountriesAllTimeHigh={activeCountriesAllTimeHigh}
     projectTagsHour={projectTagsHour}
     projectTagsLastHour={projectTagsLastHour}
+    projectTagsAllTimeHigh={projectTagsAllTimeHigh}
   />;
 }

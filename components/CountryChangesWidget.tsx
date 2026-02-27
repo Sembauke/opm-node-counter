@@ -13,6 +13,7 @@ interface CountryChangesItem {
 interface CountryChangesWidgetProps {
   topCountriesHour: CountryChangesItem[];
   topCountriesLastHour: CountryChangesItem[];
+  leaderAllTimeHigh: number;
 }
 
 function toFlagEmoji(countryCode: string) {
@@ -35,13 +36,12 @@ function getCountryName(countryCode: string) {
 export default function CountryChangesWidget({
   topCountriesHour,
   topCountriesLastHour,
+  leaderAllTimeHigh,
 }: CountryChangesWidgetProps) {
   const rows = topCountriesHour.slice(0, 8);
   const topCount = rows[0]?.count ?? 1;
   const currentLeader = topCountriesHour[0];
   const previousLeader = topCountriesLastHour[0];
-  const currentActive = topCountriesHour.length;
-  const previousActive = topCountriesLastHour.length;
 
   return (
     <section className={styles.sectionCard}>
@@ -61,14 +61,20 @@ export default function CountryChangesWidget({
             Current leader: {toFlagEmoji(currentLeader.countryCode.toUpperCase())}{" "}
             {getCountryName(currentLeader.countryCode)} ({currentLeader.count.toLocaleString()})
           </>
-        ) : null}
+        ) : (
+          <>Current leader: No data</>
+        )}
+        {" • "}
         {previousLeader ? (
           <>
-            {" • "}
             Last hour leader: {toFlagEmoji(previousLeader.countryCode.toUpperCase())}{" "}
             {getCountryName(previousLeader.countryCode)} ({previousLeader.count.toLocaleString()})
           </>
-        ) : null}
+        ) : (
+          <>Last hour leader: No data</>
+        )}
+        {" • "}
+        All-time high leader count: {leaderAllTimeHigh.toLocaleString()}
       </p>
 
       {rows.length === 0 ? (

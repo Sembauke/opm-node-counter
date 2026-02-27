@@ -163,7 +163,7 @@
 
 .secondaryStatsGrid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -241,6 +241,16 @@
   color: var(--text-muted);
   font-size: 0.79rem;
   line-height: 1.35;
+}
+
+.statCompareSplit {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  row-gap: 0.22rem;
+}
+
+.statCompareLine {
+  display: block;
 }
 
 .nodesPerMinuteCard {
@@ -609,7 +619,7 @@
 
 .qualityGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 
@@ -623,6 +633,11 @@
   border-radius: 14px;
 }
 
+.qualityProjectCard {
+  padding: 1.25rem 1.35rem;
+  gap: 0.55rem;
+}
+
 .qualityValue {
   margin: 0;
   font-size: 1.55rem;
@@ -631,6 +646,11 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
   letter-spacing: -0.02em;
+}
+
+.qualityProjectValue {
+  font-size: clamp(2.2rem, 4.4vw, 3rem);
+  line-height: 1;
 }
 
 .qualityBar {
@@ -667,21 +687,31 @@
   line-height: 1;
 }
 
-.qualityDeltaUp {
-  color: #22c55e;
-  font-size: 0.78rem;
-  font-weight: 600;
+.qualityAllLink {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.45rem;
 }
 
-.qualityDeltaDown {
-  color: #f87171;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.qualityDeltaNeutral {
+.qualityAllButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.84rem;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qualityAllButton:hover {
+  border-color: var(--interactive-border);
+  color: var(--text-strong);
+  box-shadow: var(--interactive-shadow);
 }
 
 @media (max-width: 560px) {

@@ -86,6 +86,28 @@ const SCHEMA_SQL = `
     total_changes INTEGER NOT NULL DEFAULT 0
   );
 
+  CREATE TABLE IF NOT EXISTS total_mapper_changeset_seen (
+    changeset_id INTEGER PRIMARY KEY
+  );
+
+  CREATE TABLE IF NOT EXISTS total_mapper_changes (
+    user TEXT PRIMARY KEY,
+    total_changes INTEGER NOT NULL DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS total_mapper_country_changeset_seen (
+    changeset_id INTEGER NOT NULL,
+    user TEXT NOT NULL,
+    PRIMARY KEY (changeset_id, user)
+  );
+
+  CREATE TABLE IF NOT EXISTS total_mapper_country_changes (
+    user TEXT NOT NULL,
+    country_code TEXT NOT NULL,
+    total_changes INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user, country_code)
+  );
+
   CREATE TABLE IF NOT EXISTS comment_stats_hour (
     bucket_hour INTEGER NOT NULL,
     changeset_id INTEGER NOT NULL,
@@ -105,6 +127,30 @@ const SCHEMA_SQL = `
     tag TEXT NOT NULL,
     count INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (bucket_hour, tag)
+  );
+
+  CREATE TABLE IF NOT EXISTS total_project_tag_changeset_seen (
+    changeset_id INTEGER NOT NULL,
+    tag TEXT NOT NULL,
+    PRIMARY KEY (changeset_id, tag)
+  );
+
+  CREATE TABLE IF NOT EXISTS total_project_tag_changes (
+    tag TEXT PRIMARY KEY,
+    total_changes INTEGER NOT NULL DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS total_project_tag_country_changeset_seen (
+    changeset_id INTEGER NOT NULL,
+    tag TEXT NOT NULL,
+    PRIMARY KEY (changeset_id, tag)
+  );
+
+  CREATE TABLE IF NOT EXISTS total_project_tag_country_changes (
+    tag TEXT NOT NULL,
+    country_code TEXT NOT NULL,
+    total_changes INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (tag, country_code)
   );
 `;
 
