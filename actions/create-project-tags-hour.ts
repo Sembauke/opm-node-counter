@@ -1,6 +1,7 @@
 'use server'
 
 import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
+import { normalizeCountryCode } from "../lib/country";
 
 const insertProjectTagChangeset = db.prepare(`
   INSERT OR IGNORE INTO project_tag_changesets_hour (bucket_hour, changeset_id, tag)
@@ -21,6 +22,23 @@ const insertAllTimeProjectTagSeen = db.prepare(`
 const insertAllTimeProjectTagCountrySeen = db.prepare(`
   INSERT OR IGNORE INTO total_project_tag_country_changeset_seen (changeset_id, tag)
   VALUES (?, ?)
+`);
+
+const insertProjectTagChangesetDetail = db.prepare(`
+  INSERT OR IGNORE INTO total_project_tag_changesets (
+    tag,
+    changeset_id,
+    user,
+    changes,
+    created_at,
+    center_lat,
+    center_lon,
+    min_lat,
+    min_lon,
+    max_lat,
+    max_lon
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const upsertAllTimeProjectTagChanges = db.prepare(`
@@ -57,7 +75,26 @@ function extractHashtags(comment: string): string[] {
 }
 
 const trackTagsForChangeset = db.transaction(
-  (bucketHour: number, changesetId: number, tags: string[], changes: number, countryCode: string | null) => {
+  (
+    bucketHour: number,
+    changesetId: number,
+    tags: string[],
+    changes: number,
+    countryCode: string | null,
+    user: string | null,
+    createdAt: string | null,
+    minLat: number | null,
+    minLon: number | null,
+    maxLat: number | null,
+    maxLon: number | null
+  ) => {
+    const trimmedUser = user?.trim() ?? "";
+    const safeUser = trimmedUser.length > 0 ? trimmedUser : "unknown";
+    const centerLat =
+      minLat !== null && maxLat !== null ? (minLat + maxLat) / 2 : null;
+    const centerLon =
+      minLon !== null && maxLon !== null ? (minLon + maxLon) / 2 : null;
+
     for (const tag of tags) {
       const hourlyInsertResult = insertProjectTagChangeset.run(bucketHour, changesetId, tag);
       if (hourlyInsertResult.changes > 0) {
@@ -69,30 +106,29 @@ const trackTagsForChangeset = db.transaction(
         upsertAllTimeProjectTagChanges.run(tag, changes);
       }
 
-      if (!countryCode) {
-        continue;
+      if (countryCode) {
+        const allTimeCountryInsertResult = insertAllTimeProjectTagCountrySeen.run(changesetId, tag);
+        if (allTimeCountryInsertResult.changes > 0) {
+          upsertAllTimeProjectTagCountryChanges.run(tag, countryCode, changes);
+        }
       }
 
-      const allTimeCountryInsertResult = insertAllTimeProjectTagCountrySeen.run(changesetId, tag);
-      if (allTimeCountryInsertResult.changes > 0) {
-        upsertAllTimeProjectTagCountryChanges.run(tag, countryCode, changes);
-      }
+      insertProjectTagChangesetDetail.run(
+        tag,
+        changesetId,
+        safeUser,
+        changes,
+        createdAt,
+        centerLat,
+        centerLon,
+        minLat,
+        minLon,
+        maxLat,
+        maxLon
+      );
     }
   }
 );
-
-function normalizeCountryCode(countryCode: string | null) {
-  if (!countryCode) {
-    return null;
-  }
-
-  const normalized = countryCode.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(normalized)) {
-    return null;
-  }
-
-  return normalized;
-}
 
 function normalizeChanges(changes: number | null) {
   if (changes === null) {
@@ -106,18 +142,35 @@ function normalizeChanges(changes: number | null) {
   return Math.max(Math.floor(changes), 0);
 }
 
+function normalizeFiniteNumber(value: number | null) {
+  if (value === null || !Number.isFinite(value)) {
+    return null;
+  }
+  return value;
+}
+
 export async function sendOrGetProjectTagsHour(
   changesetId: number | null = null,
   comment: string | null = null,
   hourOffset: number = 0,
   changes: number | null = null,
-  countryCode: string | null = null
+  countryCode: string | null = null,
+  user: string | null = null,
+  createdAt: string | null = null,
+  minLat: number | null = null,
+  minLon: number | null = null,
+  maxLat: number | null = null,
+  maxLon: number | null = null
 ): Promise<{ count: number; topTags: string[] }> {
   const bucketHour = getCurrentHourBucket();
   pruneHourlyStats(bucketHour);
   const targetBucketHour = bucketHour + Math.trunc(hourOffset);
   const normalizedChanges = normalizeChanges(changes);
   const normalizedCountryCode = normalizeCountryCode(countryCode);
+  const normalizedMinLat = normalizeFiniteNumber(minLat);
+  const normalizedMinLon = normalizeFiniteNumber(minLon);
+  const normalizedMaxLat = normalizeFiniteNumber(maxLat);
+  const normalizedMaxLon = normalizeFiniteNumber(maxLon);
 
   if (changesetId !== null && comment !== null && hourOffset === 0) {
     const tags = extractHashtags(comment);
@@ -127,7 +180,13 @@ export async function sendOrGetProjectTagsHour(
         changesetId,
         tags,
         normalizedChanges,
-        normalizedCountryCode
+        normalizedCountryCode,
+        user,
+        createdAt,
+        normalizedMinLat,
+        normalizedMinLon,
+        normalizedMaxLat,
+        normalizedMaxLon
       );
     }
   }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "../app/page.module.css";
+import { toFlagEmoji } from "@/lib/country";
 
 interface Mapper {
   user: string;
@@ -13,19 +14,8 @@ interface PodiumWidgetProps {
   leaderAllTimeHigh: number;
 }
 
-function toFlagEmoji(countryCode: string) {
-  return countryCode
-    .toUpperCase()
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
-}
-
 function getMapperFlag(countryCode: string | null) {
-  if (!countryCode || !/^[A-Z]{2}$/.test(countryCode)) {
-    return "🏳️";
-  }
-  return toFlagEmoji(countryCode);
+  return toFlagEmoji(countryCode) ?? "🏳️";
 }
 
 function MapperLink({ user }: { user: string }) {

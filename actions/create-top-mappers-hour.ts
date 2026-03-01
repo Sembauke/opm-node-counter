@@ -1,6 +1,7 @@
 'use server'
 
 import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
+import { normalizeCountryCode } from "../lib/country";
 
 const insertChangesetForUser = db.prepare(`
   INSERT OR IGNORE INTO top_mapper_changesets_hour (bucket_hour, user, changeset_id)
@@ -54,19 +55,6 @@ const selectTopMappers = db.prepare(`
   ORDER BY top.total_changes DESC, top.user ASC
   LIMIT 18
 `);
-
-function normalizeCountryCode(countryCode: string | null) {
-  if (!countryCode) {
-    return null;
-  }
-
-  const normalized = countryCode.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(normalized)) {
-    return null;
-  }
-
-  return normalized;
-}
 
 const trackTopMapperForChangeset = db.transaction(
   (

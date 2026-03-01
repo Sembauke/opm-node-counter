@@ -2,6 +2,7 @@
 
 import { db, getCurrentHourBucket, pruneHourlyStats } from "../lib/db";
 import { isSovereignCountryCode } from "../lib/sovereign-countries";
+import { normalizeCountryCode } from "../lib/country";
 
 const insertChangesetForCountry = db.prepare(`
   INSERT OR IGNORE INTO top_country_changesets_hour (bucket_hour, changeset_id, country_code)
@@ -47,23 +48,6 @@ const trackTopCountryForChangeset = db.transaction(
   }
 );
 
-function normalizeCountryCode(countryCode: string | null) {
-  if (!countryCode) {
-    return null;
-  }
-
-  const normalized = countryCode.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(normalized)) {
-    return null;
-  }
-
-  if (!isSovereignCountryCode(normalized)) {
-    return null;
-  }
-
-  return normalized;
-}
-
 export async function sendOrGetTopCountriesHour(
   countryCode: string | null = null,
   changes: number = 1,
@@ -75,8 +59,12 @@ export async function sendOrGetTopCountriesHour(
   const targetBucketHour = bucketHour + Math.trunc(hourOffset);
 
   const normalizedCountryCode = normalizeCountryCode(countryCode);
-  if (normalizedCountryCode && changesetId !== null && hourOffset === 0) {
-    trackTopCountryForChangeset(targetBucketHour, normalizedCountryCode, changes, changesetId);
+  const validSovereignCountryCode =
+    normalizedCountryCode && isSovereignCountryCode(normalizedCountryCode)
+      ? normalizedCountryCode
+      : null;
+  if (validSovereignCountryCode && changesetId !== null && hourOffset === 0) {
+    trackTopCountryForChangeset(targetBucketHour, validSovereignCountryCode, changes, changesetId);
   }
 
   const rows = selectTopCountries.all(targetBucketHour) as Array<{ countryCode: string; count: number }>;

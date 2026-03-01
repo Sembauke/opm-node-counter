@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import CountUp from "react-countup";
 import styles from "./page.module.css";
+import { toFlagEmoji } from "@/lib/country";
 
 interface Mapper {
   user: string;
@@ -11,21 +12,10 @@ interface Mapper {
 }
 
 const POLL_INTERVAL_MS = 6_000;
-
-function toFlagEmoji(countryCode: string) {
-  return countryCode
-    .toUpperCase()
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
-}
+const ITEMS_PER_PAGE = 60;
 
 function getUserFlag(countryCode: string | null) {
-  if (!countryCode || !/^[A-Z]{2}$/.test(countryCode)) {
-    return "🏳️";
-  }
-
-  return toFlagEmoji(countryCode);
+  return toFlagEmoji(countryCode) ?? "🏳️";
 }
 
 export default function UsersGrid({ initialUsers }: { initialUsers: Mapper[] }) {
@@ -35,6 +25,7 @@ export default function UsersGrid({ initialUsers }: { initialUsers: Mapper[] }) 
   );
   const [pulsingUsers, setPulsingUsers] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -94,6 +85,17 @@ export default function UsersGrid({ initialUsers }: { initialUsers: Mapper[] }) 
   const filtered = normalized
     ? users.filter((mapper) => mapper.user.toLowerCase().includes(normalized))
     : users;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const pageStartIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedUsers = filtered.slice(pageStartIndex, pageStartIndex + ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [normalized]);
+
+  useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
 
   return (
     <>
@@ -117,34 +119,60 @@ export default function UsersGrid({ initialUsers }: { initialUsers: Mapper[] }) 
       {filtered.length === 0 ? (
         <p className={styles.empty}>No users match "{query}".</p>
       ) : (
-        <ul className={styles.grid}>
-          {filtered.map((mapper) => {
-            const globalRank = users.indexOf(mapper) + 1;
-            const isPulsing = pulsingUsers.has(mapper.user);
-            return (
-              <li
-                key={mapper.user}
-                className={`${styles.card}${isPulsing ? ` ${styles.cardPulse}` : ""}`}
-              >
-                <span className={styles.rank}>#{globalRank}</span>
-                <span className={styles.flag} aria-hidden>
-                  {getUserFlag(mapper.countryCode)}
-                </span>
-                <a
-                  href={`https://www.openstreetmap.org/user/${encodeURIComponent(mapper.user)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.name}
+        <>
+          <ul className={styles.grid}>
+            {paginatedUsers.map((mapper) => {
+              const globalRank = users.indexOf(mapper) + 1;
+              const isPulsing = pulsingUsers.has(mapper.user);
+              return (
+                <li
+                  key={mapper.user}
+                  className={`${styles.card}${isPulsing ? ` ${styles.cardPulse}` : ""}`}
                 >
-                  {mapper.user}
-                </a>
-                <span className={`${styles.count}${isPulsing ? ` ${styles.countPulse}` : ""}`}>
-                  <CountUp preserveValue end={mapper.count} separator="," />
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+                  <span className={styles.rank}>#{globalRank}</span>
+                  <span className={styles.flag} aria-hidden>
+                    {getUserFlag(mapper.countryCode)}
+                  </span>
+                  <a
+                    href={`https://www.openstreetmap.org/user/${encodeURIComponent(mapper.user)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.name}
+                  >
+                    {mapper.user}
+                  </a>
+                  <span className={`${styles.count}${isPulsing ? ` ${styles.countPulse}` : ""}`}>
+                    <CountUp preserveValue end={mapper.count} separator="," />
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+
+          {totalPages > 1 ? (
+            <nav className={styles.pagination} aria-label="User pagination">
+              <button
+                type="button"
+                className={styles.pageButton}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
+                Previous
+              </button>
+              <p className={styles.pageMeta}>
+                Page {currentPage.toLocaleString()} of {totalPages.toLocaleString()}
+              </p>
+              <button
+                type="button"
+                className={styles.pageButton}
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              >
+                Next
+              </button>
+            </nav>
+          ) : null}
+        </>
       )}
     </>
   );

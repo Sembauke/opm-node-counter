@@ -1,5 +1,6 @@
 import CountUp from "react-countup";
 import { FiInfo } from "react-icons/fi";
+import type { ReactNode } from "react";
 import { Tooltip } from "./ui/tooltip";
 import styles from "../app/page.module.css";
 
@@ -19,6 +20,41 @@ interface MoreStatsSectionProps {
   totalSovereignCountries: number;
 }
 
+interface ComparisonMetric {
+  label: string;
+  value: string;
+}
+
+interface MetricCardProps {
+  label: string;
+  tooltip: string;
+  value: ReactNode;
+  comparisons: ComparisonMetric[];
+}
+
+function MetricCard({ label, tooltip, value, comparisons }: MetricCardProps) {
+  return (
+    <article className={styles.statCard}>
+      <div className={styles.statLabelRow}>
+        <p className={styles.statLabel}>{label}</p>
+        <Tooltip content={tooltip} showArrow>
+          <button className={styles.statInfoBtn} aria-label="More information">
+            <FiInfo />
+          </button>
+        </Tooltip>
+      </div>
+      <p className={styles.statValue}>{value}</p>
+      <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
+        {comparisons.map((comparison) => (
+          <span key={comparison.label} className={styles.statCompareLine}>
+            {comparison.label}: {comparison.value}
+          </span>
+        ))}
+      </p>
+    </article>
+  );
+}
+
 export default function MoreStatsSection({
   averageChangesHour,
   averageChangesLastHour,
@@ -36,96 +72,62 @@ export default function MoreStatsSection({
 }: MoreStatsSectionProps) {
   return (
     <div className={styles.secondaryStatsGrid}>
-      <article className={styles.statCard}>
-        <div className={styles.statLabelRow}>
-          <p className={styles.statLabel}>Average Changes</p>
-          <Tooltip content="Mean changes per changeset in this hour window" showArrow>
-            <button className={styles.statInfoBtn} aria-label="More information">
-              <FiInfo />
-            </button>
-          </Tooltip>
-        </div>
-        <p className={styles.statValue}>
+      <MetricCard
+        label="Average Changes"
+        tooltip="Mean changes per changeset in this hour window"
+        value={
           <CountUp preserveValue end={averageChangesHour} separator="," />
-        </p>
-        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
-          <span className={styles.statCompareLine}>
-            Last hour: {averageChangesLastHour.toLocaleString()}
-          </span>
-          <span className={styles.statCompareLine}>
-            All-time high: {averageChangesAllTimeHigh.toLocaleString()}
-          </span>
-        </p>
-      </article>
+        }
+        comparisons={[
+          { label: "Last hour", value: averageChangesLastHour.toLocaleString() },
+          { label: "All-time high", value: averageChangesAllTimeHigh.toLocaleString() },
+        ]}
+      />
 
-      <article className={styles.statCard}>
-        <div className={styles.statLabelRow}>
-          <p className={styles.statLabel}>Unique Mappers</p>
-          <Tooltip content="Distinct contributors active in the latest hour" showArrow>
-            <button className={styles.statInfoBtn} aria-label="More information">
-              <FiInfo />
-            </button>
-          </Tooltip>
-        </div>
-        <p className={styles.statValue}>
+      <MetricCard
+        label="Unique Mappers"
+        tooltip="Distinct contributors active in the latest hour"
+        value={
           <CountUp preserveValue end={uniqueMappersHour} separator="," />
-        </p>
-        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
-          <span className={styles.statCompareLine}>
-            Last hour: {uniqueMappersLastHour.toLocaleString()}
-          </span>
-          <span className={styles.statCompareLine}>
-            All-time high: {uniqueMappersAllTimeHigh.toLocaleString()}
-          </span>
-        </p>
-      </article>
+        }
+        comparisons={[
+          { label: "Last hour", value: uniqueMappersLastHour.toLocaleString() },
+          { label: "All-time high", value: uniqueMappersAllTimeHigh.toLocaleString() },
+        ]}
+      />
 
-      <article className={styles.statCard}>
-        <div className={styles.statLabelRow}>
-          <p className={styles.statLabel}>New Nodes This Hour</p>
-          <Tooltip content="Aggregate node growth captured during this hour" showArrow>
-            <button className={styles.statInfoBtn} aria-label="More information">
-              <FiInfo />
-            </button>
-          </Tooltip>
-        </div>
-        <p className={styles.statValue}>
+      <MetricCard
+        label="New Nodes This Hour"
+        tooltip="Aggregate node growth captured during this hour"
+        value={
           <CountUp preserveValue end={newNodesHour} separator="," />
-        </p>
-        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
-          <span className={styles.statCompareLine}>
-            Last hour: {newNodesLastHour.toLocaleString()}
-          </span>
-          <span className={styles.statCompareLine}>
-            All-time high: {newNodesAllTimeHigh.toLocaleString()}
-          </span>
-        </p>
-      </article>
+        }
+        comparisons={[
+          { label: "Last hour", value: newNodesLastHour.toLocaleString() },
+          { label: "All-time high", value: newNodesAllTimeHigh.toLocaleString() },
+        ]}
+      />
 
-      <article className={styles.statCard}>
-        <div className={styles.statLabelRow}>
-          <p className={styles.statLabel}>Active Countries</p>
-          <Tooltip content="Countries with detected edits this hour out of tracked sovereign countries" showArrow>
-            <button className={styles.statInfoBtn} aria-label="More information">
-              <FiInfo />
-            </button>
-          </Tooltip>
-        </div>
-        <p className={styles.statValue}>
+      <MetricCard
+        label="Active Countries"
+        tooltip="Countries with detected edits this hour out of tracked sovereign countries"
+        value={
+          <>
           <CountUp preserveValue end={activeCountriesHour} separator="," /> /{" "}
           {totalSovereignCountries.toLocaleString()}
-        </p>
-        <p className={`${styles.statCompare} ${styles.statCompareSplit}`}>
-          <span className={styles.statCompareLine}>
-            Last hour: {activeCountriesLastHour.toLocaleString()} /{" "}
-            {totalSovereignCountries.toLocaleString()}
-          </span>
-          <span className={styles.statCompareLine}>
-            All-time high: {activeCountriesAllTimeHigh.toLocaleString()} /{" "}
-            {totalSovereignCountries.toLocaleString()}
-          </span>
-        </p>
-      </article>
+          </>
+        }
+        comparisons={[
+          {
+            label: "Last hour",
+            value: `${activeCountriesLastHour.toLocaleString()} / ${totalSovereignCountries.toLocaleString()}`,
+          },
+          {
+            label: "All-time high",
+            value: `${activeCountriesAllTimeHigh.toLocaleString()} / ${totalSovereignCountries.toLocaleString()}`,
+          },
+        ]}
+      />
     </div>
   );
 }

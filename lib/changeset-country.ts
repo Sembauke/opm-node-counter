@@ -1,20 +1,13 @@
 import { iso1A2Code } from "@rapideditor/country-coder";
 import type { Changeset } from "@/types/changeset";
+import {
+  normalizeCountryCode as normalizeAlpha2CountryCode,
+  toFlagEmoji as toFlagEmojiFromCountryCode,
+} from "@/lib/country";
 
 const countryCache = new Map<string, { countryCode: string | null; countryFlag: string | null }>();
 const MAX_CACHE_ENTRIES = 4000;
 const UNWANTED_CODES = new Set(["UN"]);
-
-function toFlagEmoji(countryCode: string | null): string | null {
-  if (!countryCode || !/^[A-Z]{2}$/.test(countryCode)) {
-    return null;
-  }
-
-  return countryCode
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
-}
 
 function resolveCountryFromCenter(lat: number, lon: number) {
   const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
@@ -23,10 +16,10 @@ function resolveCountryFromCenter(lat: number, lon: number) {
     return cached;
   }
 
-  const countryCode = iso1A2Code([lon, lat]);
+  const countryCode = normalizeCountryCode(iso1A2Code([lon, lat]));
   const resolved = {
     countryCode,
-    countryFlag: toFlagEmoji(countryCode),
+    countryFlag: toFlagEmojiFromCountryCode(countryCode),
   };
 
   if (countryCache.size >= MAX_CACHE_ENTRIES) {
@@ -45,10 +38,11 @@ function isFiniteNumber(value: unknown): value is number {
 }
 
 function normalizeCountryCode(code: string | null) {
-  if (!code || UNWANTED_CODES.has(code)) {
+  const normalized = normalizeAlpha2CountryCode(code);
+  if (!normalized || UNWANTED_CODES.has(normalized)) {
     return null;
   }
-  return code;
+  return normalized;
 }
 
 function resolveCountryForChangeset(changeset: Changeset) {
@@ -70,7 +64,7 @@ function resolveCountryForChangeset(changeset: Changeset) {
   if (normalizedCenter) {
     return {
       countryCode: normalizedCenter,
-      countryFlag: toFlagEmoji(normalizedCenter),
+      countryFlag: toFlagEmojiFromCountryCode(normalizedCenter),
     };
   }
 
@@ -93,7 +87,7 @@ function resolveCountryForChangeset(changeset: Changeset) {
     const bestCountry = Array.from(countryHits.entries()).sort((a, b) => b[1] - a[1])[0][0];
     return {
       countryCode: bestCountry,
-      countryFlag: toFlagEmoji(bestCountry),
+      countryFlag: toFlagEmojiFromCountryCode(bestCountry),
     };
   }
 

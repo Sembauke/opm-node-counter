@@ -247,6 +247,46 @@
   font-variant-numeric: tabular-nums;
 }
 
+.pagination {
+  margin-top: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.pageMeta {
+  margin: 0;
+  min-width: 9.5rem;
+  text-align: center;
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.pageButton {
+  padding: 0.44rem 0.82rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.pageButton:hover:not(:disabled) {
+  border-color: var(--interactive-border);
+  transform: translateY(-1px);
+}
+
+.pageButton:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+
 @media (max-width: 1000px) {
   .grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));

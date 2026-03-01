@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FiInfo } from "react-icons/fi";
 import { Tooltip } from "./ui/tooltip";
 import styles from "../app/page.module.css";
+import { getCountryName, toFlagEmoji } from "@/lib/country";
 
 interface CountryChangesItem {
   countryCode: string;
@@ -14,23 +15,6 @@ interface CountryChangesWidgetProps {
   topCountriesHour: CountryChangesItem[];
   topCountriesLastHour: CountryChangesItem[];
   leaderAllTimeHigh: number;
-}
-
-function toFlagEmoji(countryCode: string) {
-  return countryCode
-    .toUpperCase()
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
-}
-
-function getCountryName(countryCode: string) {
-  try {
-    const displayNames = new Intl.DisplayNames(undefined, { type: "region" });
-    return displayNames.of(countryCode.toUpperCase()) ?? countryCode;
-  } catch {
-    return countryCode;
-  }
 }
 
 export default function CountryChangesWidget({
@@ -58,7 +42,7 @@ export default function CountryChangesWidget({
       <p className={styles.sectionCompare}>
         {currentLeader ? (
           <>
-            Current leader: {toFlagEmoji(currentLeader.countryCode.toUpperCase())}{" "}
+            Current leader: {toFlagEmoji(currentLeader.countryCode) ?? "🏳️"}{" "}
             {getCountryName(currentLeader.countryCode)} ({currentLeader.count.toLocaleString()})
           </>
         ) : (
@@ -67,7 +51,7 @@ export default function CountryChangesWidget({
         {" • "}
         {previousLeader ? (
           <>
-            Last hour leader: {toFlagEmoji(previousLeader.countryCode.toUpperCase())}{" "}
+            Last hour leader: {toFlagEmoji(previousLeader.countryCode) ?? "🏳️"}{" "}
             {getCountryName(previousLeader.countryCode)} ({previousLeader.count.toLocaleString()})
           </>
         ) : (
@@ -89,7 +73,7 @@ export default function CountryChangesWidget({
               <li key={row.countryCode} className={styles.countryRow}>
                 <span className={styles.countryRank}>{index + 1}</span>
                 <span className={styles.countryRowFlag} aria-hidden>
-                  {toFlagEmoji(countryCode)}
+                  {toFlagEmoji(countryCode) ?? "🏳️"}
                 </span>
                 <span className={styles.countryIdentity}>{getCountryName(countryCode)}</span>
                 <span className={styles.countryCount}>{row.count.toLocaleString()}</span>

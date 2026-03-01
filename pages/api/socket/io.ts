@@ -24,7 +24,7 @@ import type { Changeset } from "@/types/changeset";
 
 const STATS_INTERVAL_MS = 6000;
 const OSM_CHANGESETS_URL = "https://www.openstreetmap.org/api/0.6/changesets.json?limit=25&closed=true";
-const STATS_LOOP_VERSION = "project-and-user-country-flag-v24";
+const STATS_LOOP_VERSION = "project-participants-v25";
 const NODES_PER_MINUTE_SMOOTHING_ALPHA = 0.34;
 const NODE_RATE_WINDOW_MS = 90_000;
 const NODE_RATE_MIN_ELAPSED_MS = 18_000;
@@ -203,7 +203,7 @@ export const config = {
   },
 };
 
-export default async function handler(req: any, res: any) {
+export default async function handler(_req: any, res: any) {
   type SocketServerWithState = typeof res.socket.server & {
     io?: Server;
     statsInterval?: NodeJS.Timeout;
@@ -366,7 +366,13 @@ export default async function handler(req: any, res: any) {
             comment,
             0,
             cs.changes_count,
-            cs.countryCode ?? null
+            cs.countryCode ?? null,
+            cs.user,
+            cs.created_at ?? cs.timestamp ?? null,
+            cs.min_lat ?? null,
+            cs.min_lon ?? null,
+            cs.max_lat ?? null,
+            cs.max_lon ?? null
           );
         }
 

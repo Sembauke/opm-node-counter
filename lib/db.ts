@@ -152,6 +152,24 @@ const SCHEMA_SQL = `
     total_changes INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (tag, country_code)
   );
+
+  CREATE TABLE IF NOT EXISTS total_project_tag_changesets (
+    tag TEXT NOT NULL,
+    changeset_id INTEGER NOT NULL,
+    user TEXT NOT NULL,
+    changes INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT,
+    center_lat REAL,
+    center_lon REAL,
+    min_lat REAL,
+    min_lon REAL,
+    max_lat REAL,
+    max_lon REAL,
+    PRIMARY KEY (tag, changeset_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_total_project_tag_changesets_tag
+    ON total_project_tag_changesets (tag);
 `;
 
 function getDatabasePath() {

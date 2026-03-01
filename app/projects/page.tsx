@@ -24,7 +24,7 @@ export default async function ProjectsPage() {
           <div>
             <h1 className={styles.title}>Total changes per #project tag</h1>
             <p className={styles.subtitle}>
-              {projects.length} project tag{projects.length === 1 ? "" : "s"} with recorded activity since tracking began
+              {projects.length} project tag{projects.length === 1 ? "" : "s"} with recorded activity
             </p>
           </div>
         </div>

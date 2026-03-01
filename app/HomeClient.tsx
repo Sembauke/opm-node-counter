@@ -15,6 +15,7 @@ import TotalChangesetsLineGraph, {
 } from "../components/TotalChangesetsLineGraph";
 import { Changeset } from "@/types/changeset";
 import { useColorMode } from "@/components/ui/color-mode";
+import { toFlagEmoji } from "@/lib/country";
 
 interface HomeClientProps {
   changesetBatch: Changeset[];
@@ -110,14 +111,6 @@ const CONTRIBUTOR_FALL_MIN_MS = 12_800;
 const CONTRIBUTOR_FALL_RANGE_MS = 5_800;
 const PARTICLE_DELAY_MAX_MS = 700;
 
-function toFlagEmoji(countryCode: string): string {
-  return countryCode
-    .toUpperCase()
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
-}
-
 function getChangesetFlag(changeset: Changeset): string {
   const knownFlag = changeset.countryFlag?.trim();
   if (knownFlag) {
@@ -125,8 +118,11 @@ function getChangesetFlag(changeset: Changeset): string {
   }
 
   const knownCode = changeset.countryCode?.trim();
-  if (knownCode && /^[a-z]{2}$/i.test(knownCode)) {
-    return toFlagEmoji(knownCode);
+  if (knownCode) {
+    const flag = toFlagEmoji(knownCode);
+    if (flag) {
+      return flag;
+    }
   }
 
   return "🏳️";
